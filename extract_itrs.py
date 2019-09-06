@@ -10,6 +10,17 @@ from sets import Set
 
 np.set_printoptions(threshold=sys.maxsize) # THIS IS NECESSARY to write the files correctly to disk
 
+import argparse
+parser = argparse.ArgumentParser(description='Generate IADs from input files')
+#required command line args
+parser.add_argument('iad_file', help='The input file')
+
+parser.add_argument('--prefix', nargs='?', type=str, default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
+parser.add_argument('--dst_directory', nargs='?', type=str, default='generated_iads/', help='where the IADs should be stored')
+
+
+FLAGS = parser.parse_args()
+
 '''
 #0 - empty
 #1 - br
@@ -47,25 +58,6 @@ CORE_FILTERS_13 = {
 
 write_file,run_code = 0, 0
 
-def modification(ex, length, c3d_depth):
-
-	# remove beginning and ending tags
-	img_mod = ex.copy()[:, 2:(length-2)]
-
-	if c3d_depth < 2:
-		#per row smoothing
-		smooth_amount = [11, 7] 
-
-		for row in range(img_mod.shape[0]):
-			img_mod[row] = scipy.signal.savgol_filter(img_mod[row], smooth_amount[c3d_depth], 2, mode='mirror')
-		
-	new_len = img_mod.shape[1]
-	
-	# pad out to starting length
-	img_mod = np.pad(img_mod, ((0,0),(0,ex.shape[1]-img_mod.shape[1])), 'constant', constant_values=((0,0),(0,0)))
-
-	return img_mod, new_len
-
 ############################
 # Pairwise Combinations
 ############################
@@ -88,17 +80,6 @@ def pairwise_gather(input_var):
 ############################
 # Convolution
 ############################
-
-def get_placeholders(num_features, num_frames):
-	'''
-	Establishes the placeholders used in the ITR extraction process
-		- num_features: int, the number of features in the IAD
-		- num_frames: int, the number of time steps in the IAD
-		- num_itrs: int, the number ITRs being searched for (7 or 13)
-		- num_classes: int, the number of classes to classify over
-	'''
-
-	return tf.placeholder(tf.float32, shape=(num_features,num_frames),name="input_ph")
 
 def permute_filter_combinations(shared_array, array, cur_depth):
 	'''
@@ -125,7 +106,7 @@ def get_variables(filter_width):
 	filters = tf.cast(tf.constant(filters),tf.float32)
 	return filters
 
-def generate_pairwise_projections(placeholders, filter_width=2):
+def generate_pairwise_projections(input_ph, filter_width=2):
 	'''
 	Generate the projection of filters for each of the pairwise combinations
 	of rows in the IAD. This involves two steps: 1) the pairwise seprataion 
@@ -137,20 +118,9 @@ def generate_pairwise_projections(placeholders, filter_width=2):
 		- filter_width: int, default (2) the width of the fixed filters
 	'''
 
-	input_var = placeholders
-	
 	# get pairwise combination of IAD features
-	pw = pairwise_gather(input_var)
-	'''
-	mean = tf.reduce_min(pw, axis = (1,2))
-	mean = tf.reshape(mean, [-1,1,1])
-	pw = tf.add(pw, -mean)
-	max_v = tf.reduce_max(pw, axis = (1,2))
-	max_v = tf.reshape(max_v, [-1,1,1])
-	pw = tf.div(pw, max_v)
-	pw = tf.multiply(pw, 2)
-	pw = tf.add(pw, -1)
-	'''
+	pw = pairwise_gather(input_ph)
+	
 	# pad the beginning and ending of each IAD with -1 values to ensure that 
 	# specific core moments can be found
 	pw = tf.pad(pw, tf.constant([[0,0], [0,0], [1,1]]), "CONSTANT", constant_values = -1)
@@ -166,7 +136,6 @@ def generate_pairwise_projections(placeholders, filter_width=2):
 
 	#collapse data
 	return tf.argmax(conv0, axis = 2)
-
 
 ############################
 # Collapse and Count
@@ -203,177 +172,49 @@ def extract_itrs(projections):
 # Main
 ############################
 
-def single():
+def main(input_filename):
 	#provide filenames and generate and save the ITRs into a nump array
+	
+	f = np.load(input_filename)
+	data, labels, lengths = f["data"], f["label"], f["length"]
+	
+	# clip the data for values outside of the expected range
+	data = np.clip(data, 0.0, 1.0)
 
-	#global write_file, run_code
+	# scale the data to be between -1 and 1
+	data *= 2
+	data -= 1
 
-	dataset_name = 'ntu'
+	###############################
+	# Extract ITRs
+	###############################
 
-	for c3d_depth in range(0, 5):
+	# get the pairwise projection (one dimensional representations of the data)
+	ph = tf.placeholder(tf.float32, shape=(data.shape[1],data.shape[2]),name="input_ph")
+	itr_extractor = generate_pairwise_projections(ph)
+
+	# prevent TF from consuming entire GPU
+	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
+
+	with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
+		sess.run(tf.local_variables_initializer())
+		sess.run(tf.global_variables_initializer())
+
+		# get the pairwise projection and then extract the ITRs
+		itrs = []
+		for i in range(num_iter):
+			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
+			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
 		
+		
+		if (not os.path.exists(FLAGS.dst_directory)):
+			os.makedirs(FLAGS.dst_directory)
 
-		###############################
-		# Data
-		###############################
-
-		def open_file(filename):
-			# open the provided .npz file and separate it into its relevant parts
-			file_contents = np.load(filename)
-			data, labels, lengths = file_contents["data"], file_contents["label"], file_contents["length"]
-			
-			# ceil the data in case of errors
-			data[data > 1] = 1.0
-
-			# constrain the data to be between -1 and 1
-			data *= 2
-			data -= 1
-
-			return data, labels, lengths
-
-		print("loading data")
-		dataset = "ntu_long_npy/2actions"+str(c3d_depth)+".npz"
-		data, labels, lengths = open_file(dataset)
-
-		for f in range(len(data)):
-			if f % 50 == 0:
-				print("update npy ", f)
-			data[f], lengths[f] = modification(data[f], lengths[f], c3d_depth)
-		data = data.squeeze()
-
-		print("data loaded, Processing "+str(data.shape[0])+" files" )
-		###############################
-		# Extract ITRs
-		###############################
-
-		num_features = [64, 128, 256, 256, 256]
-		num_itrs = 13
-
-		# setup the placeholders for the model
-		ph = get_placeholders(num_features[c3d_depth], data.shape[2])
-
-		# model_p1: get the pairwise combination of features from the IAD and then
-		#     convolve against fixed features to generate a projection of core moments
-		itr_extractor = generate_pairwise_projections(ph)
-
-		# prevent TF from consuming entire GPU
-		gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
-
-		with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
-			sess.run(tf.local_variables_initializer())
-			sess.run(tf.global_variables_initializer())
-
-			num_iter = data.shape[0]
-			itrs = []
-
-			t_s = time.time()
-			for i in range(num_iter):
-				if i % 100 == 0:
-					print(i, datetime.datetime.now())
-
-				input_data = data[i]
-
-				pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: input_data})
-				pairwise_projections = pairwise_projections[:, :lengths[i]+1]
-				
-				itrs.append(extract_itrs(pairwise_projections))
-			
-			#stack ITRs and save
-			
-			print("saving:", datetime.datetime.now())
-			filename = dataset_name+"_itrs/2actions"+str(c3d_depth)+".npz"
-			if (not os.path.exists(dataset_name+"_itrs")):
-				os.makedirs(dataset_name+"_itrs")
-			np.savez(filename, data=np.array(itrs), label=labels)
-			print("finished saving:", datetime.datetime.now())
-
-def main():
-	#provide filenames and generate and save the ITRs into a nump array
-
-	#global write_file, run_code
-
-	dataset_name = 'ucf'
-
-	for dataset_size in ['100', '75', '50', '25']:
-		for c3d_depth in range(0, 5):
-			#for group in ['test']:
-			for group in ['train', 'test']:
-
-				###############################
-				# Data
-				###############################
-
-				def open_file(filename):
-					# open the provided .npz file and separate it into its relevant parts
-					file_contents = np.load(filename)
-					data, labels, lengths = file_contents["data"], file_contents["label"], file_contents["length"]
-					
-					# ceil the data in case of errors
-					data[data > 1] = 1.0
-
-					# constrain the data to be between -1 and 1
-					data *= 2
-					data -= 1
-
-					return data, labels, lengths
-
-				print("loading data")
-				dataset = dataset_name+"_long_npy/"+dataset_name+"_"+str(dataset_size)+"/"+dataset_name+"_"+str(dataset_size)+"_"+group+"_"+str(c3d_depth)+".npz"
-				data, labels, lengths = open_file(dataset)
-
-				for f in range(len(data)):
-					if f % 50 == 0:
-						print("update npy ", f)
-					data[f], lengths[f] = modification(data[f], lengths[f], c3d_depth)
-				data = data.squeeze()
-
-				print("data loaded, Processing "+str(data.shape[0])+" files" )
-				###############################
-				# Extract ITRs
-				###############################
-
-				num_features = [64, 128, 256, 256, 256]
-				num_itrs = 13
-
-				# setup the placeholders for the model
-				ph = get_placeholders(num_features[c3d_depth], data.shape[2])
-
-				# model_p1: get the pairwise combination of features from the IAD and then
-				#     convolve against fixed features to generate a projection of core moments
-				itr_extractor = generate_pairwise_projections(ph)
-
-				# prevent TF from consuming entire GPU
-				gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
-
-				with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
-					sess.run(tf.local_variables_initializer())
-					sess.run(tf.global_variables_initializer())
-
-					num_iter = data.shape[0]
-					itrs = []
-
-					t_s = time.time()
-					for i in range(num_iter):
-						if i % 100 == 0:
-							print(i, datetime.datetime.now())
-
-						input_data = data[i]
-
-						pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: input_data})
-						pairwise_projections = pairwise_projections[:, :lengths[i]+1]
-						
-						itrs.append(extract_itrs(pairwise_projections))
-					
-					#stack ITRs and save
-					
-					print("saving:", datetime.datetime.now())
-					filename = dataset_name+"_itrs/"+dataset_name+'_'+str(dataset_size)+'_'+group+'_'+str(c3d_depth)+".npz"
-					if (not os.path.exists(dataset_name+"_itrs")):
-						os.makedirs(dataset_name+"_itrs")
-					np.savez(filename, data=np.array(itrs), label=labels)
-					print("finished saving:", datetime.datetime.now())
-					
+		#stack ITRs and save
+		print("saving:", datetime.datetime.now())
+		filename = os.path.join(FLAGS.dst_directory, FLAGS.prefix)+".npz"
+		np.savez(filename, data=np.array(itrs), label=labels)
+		print("finished saving:", datetime.datetime.now())
 
 if __name__ == '__main__':
-	single()
-	#main()
+	main(FLAGS.iad_file)

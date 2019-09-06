@@ -45,12 +45,9 @@ struct thread_data{
 	pthread_mutex_t* mut;
 };
 
-//typedef unsigned char filter_type;
 typedef int filter_type;
 
 struct filters{
-
-
 	std::unordered_set<filter_type> confounding_filters;
 	std::map<filter_type, filter_type> short_filters;
 	std::map<filter_type, std::map<filter_type, filter_type> > core_filters;
@@ -70,8 +67,9 @@ struct filters{
 
 typedef void * (*THREADFUNCPTR)(void *);
 
-void *get_itrs_thread(void *thread_args);
+
 void get_matches_cpp_thread(np::ndarray* projection, const int start, const int proj_len, int* itr_counts, const int pw_comb_id, struct filters& moments, pthread_mutex_t* mut);
+void *get_itrs_thread(void *thread_args);
 int thread(np::ndarray projection_arr, const int num_pw_comb, const int proj_len, boost::python::list itr_counts_src);
 
 
@@ -142,7 +140,6 @@ void *get_itrs_thread(void *thread_args){
 			itr_counts, 
 			pw_comb,
 			moments);
-
 	}
 
 	// update the itr_counts_src with learned values
@@ -207,5 +204,4 @@ BOOST_PYTHON_MODULE(itr_matcher)
 	Py_Initialize();
 	np::initialize();
     def("thread", thread);
-    //def("simple", simple);
 }
