@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Generate IADs from input files')
 parser.add_argument('iad_file', help='The input file')
 
 parser.add_argument('--prefix', nargs='?', type=str, default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
-parser.add_argument('--dst_directory', nargs='?', type=str, default='generated_iads/', help='where the IADs should be stored')
+parser.add_argument('--dst_directory', nargs='?', type=str, default='generated_itrs/', help='where the IADs should be stored')
 
 
 FLAGS = parser.parse_args()
