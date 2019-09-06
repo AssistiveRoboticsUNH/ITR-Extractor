@@ -19,3 +19,6 @@ $(TARGET).o: $(TARGET).cpp
 	g++ -I$(PYTHON_INCLUDE) -I$(BOOST_INC) -fPIC -c $(TARGET).cpp $(CFLAGS) 
 
 all: $(TARGET).so
+
+clean:
+	rm *.o *.so
