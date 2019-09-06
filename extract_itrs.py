@@ -1,14 +1,10 @@
 import tensorflow as tf 
 import numpy as np 
-import time, datetime
-import os, sys
 
-import scipy.signal
+import datetime
+import os
 
 import itr_matcher
-from sets import Set
-
-np.set_printoptions(threshold=sys.maxsize) # THIS IS NECESSARY to write the files correctly to disk
 
 import argparse
 parser = argparse.ArgumentParser(description='Generate IADs from input files')
@@ -17,7 +13,6 @@ parser.add_argument('iad_file', help='The input file')
 
 parser.add_argument('--prefix', nargs='?', type=str, default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
 parser.add_argument('--dst_directory', nargs='?', type=str, default='generated_itrs/', help='where the IADs should be stored')
-
 
 FLAGS = parser.parse_args()
 
@@ -208,9 +203,11 @@ def main(input_filename):
 			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
 
 		#stack ITRs and save
-		print("saving ITRs together:")
-		filename = os.path.join(FLAGS.dst_directory, FLAGS.prefix)+".npz"
-		np.savez(filename, data=np.array(itrs), label=labels)
+		print("saving ITRs together")
+		filename = os.path.join(FLAGS.dst_directory, FLAGS.prefix)
+		if (os.path.exists(filename+".npz")):
+			filename += "_"+datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
+		np.savez(filename+".npz", data=np.array(itrs), label=labels)
 
 if __name__ == '__main__':
 	if (not os.path.exists(FLAGS.dst_directory)):
