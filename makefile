@@ -10,7 +10,7 @@ BOOST_LIB = /usr/lib
 
 TARGET = itr_matcher
 
-CFLAGS = --std=c++11 -lboost_numpy27 -lboost_python27 
+CFLAGS = --std=c++11 -lboost_numpy -lboost_python 
 
 $(TARGET).so: $(TARGET).o
 	g++ -shared -Wl,--export-dynamic $(TARGET).o -L$(BOOST_LIB) -l:libboost_python-py$(subst .,,$(PYTHON_VERSION)).so -L/usr/lib/python$(PYTHON_VERSION)/config -lpython$(PYTHON_VERSION) -o $(TARGET).so $(CFLAGS) 
