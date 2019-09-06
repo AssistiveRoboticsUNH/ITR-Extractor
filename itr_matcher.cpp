@@ -34,7 +34,7 @@ int core_filters[13][2] =
 #define NUM_THREADS 1
 
 namespace p = boost::python;
-namespace np = boost::python::numpy;
+namespace np = boost::numpy;
 
 struct thread_data{
 	np::ndarray* projection;
