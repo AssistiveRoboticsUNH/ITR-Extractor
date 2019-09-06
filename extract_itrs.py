@@ -1,7 +1,7 @@
 import tensorflow as tf 
 import numpy as np 
 
-import datetime
+from datetime import datetime
 import os
 
 import itr_matcher
