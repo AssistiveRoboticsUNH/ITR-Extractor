@@ -203,18 +203,17 @@ def main(input_filename):
 		# get the pairwise projection and then extract the ITRs
 		itrs = []
 		for i in range(len(data)):
+			print("Processing file {:6d}/{:6d}".format(i, len(data)))
 			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
 			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
-		
-		
-		if (not os.path.exists(FLAGS.dst_directory)):
-			os.makedirs(FLAGS.dst_directory)
 
 		#stack ITRs and save
-		print("saving:", datetime.datetime.now())
+		print("saving ITRs together:")
 		filename = os.path.join(FLAGS.dst_directory, FLAGS.prefix)+".npz"
 		np.savez(filename, data=np.array(itrs), label=labels)
-		print("finished saving:", datetime.datetime.now())
 
 if __name__ == '__main__':
+	if (not os.path.exists(FLAGS.dst_directory)):
+		os.makedirs(FLAGS.dst_directory)
+
 	main(FLAGS.iad_file)
