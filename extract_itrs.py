@@ -202,7 +202,7 @@ def main(input_filename):
 
 		# get the pairwise projection and then extract the ITRs
 		itrs = []
-		for i in range(num_iter):
+		for i in range(len(data)):
 			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
 			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
 		
