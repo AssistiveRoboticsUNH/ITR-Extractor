@@ -203,10 +203,10 @@ def main(input_filename):
 			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
 
 		#stack ITRs and save
-		print("saving ITRs together")
 		filename = os.path.join(FLAGS.dst_directory, FLAGS.prefix)
 		if (os.path.exists(filename+".npz")):
 			filename += "_"+datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
+		print("saving ITRs together to file: {0}".format(filename))
 		np.savez(filename+".npz", data=np.array(itrs), label=labels)
 
 if __name__ == '__main__':
@@ -214,3 +214,4 @@ if __name__ == '__main__':
 		os.makedirs(FLAGS.dst_directory)
 
 	main(FLAGS.iad_file)
+	
