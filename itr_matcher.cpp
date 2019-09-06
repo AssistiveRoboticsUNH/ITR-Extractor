@@ -183,7 +183,7 @@ int thread(np::ndarray projection_arr, const int num_pw_comb, const int proj_len
 		td[i].proj_len = proj_len; 
 		td[i].itr_counts_src = &itr_counts;
 		td[i].start_chunk = i * chunk;
-		td[i].mut = &mutex;
+		td[i].mut = &mutex; 
 
 		// run process
 		pthread_create(&threads[i], NULL, (THREADFUNCPTR) &get_itrs_thread, &td[i]);
