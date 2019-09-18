@@ -185,6 +185,7 @@ def main(input_filename):
 	###############################
 
 	# get the pairwise projection (one dimensional representations of the data)
+	print (data.shape)
 	ph = tf.placeholder(tf.float32, shape=(data.shape[1],data.shape[2]),name="input_ph")
 	itr_extractor = generate_pairwise_projections(ph)
 
