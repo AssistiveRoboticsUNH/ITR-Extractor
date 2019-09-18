@@ -169,7 +169,8 @@ def extract_itrs(projections):
 
 def main(input_filename):
 	#provide filenames and generate and save the ITRs into a nump array
-	
+	print("opening file: "+input_filename)
+
 	f = np.load(input_filename)
 	data, labels, lengths = f["data"], f["label"], f["length"]
 	
