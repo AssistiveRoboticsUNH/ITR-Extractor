@@ -107,8 +107,12 @@ venv.bak/
 *.npy
 *.npz
 
-#tensorflow
-.index
-.meta
+#tensorflow ckpts
+*.meta
+*.index
+*.data*
+*.csv
 checkpoint
-*model.data*
+
+#log files
+log

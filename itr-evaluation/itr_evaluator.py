@@ -23,7 +23,7 @@ args = parser.parse_args()
 def file_io(file):
 	f = np.load(file)
 	data, label = f["data"], f["label"]
-	return data, label
+	return data, label 
 
 
 
