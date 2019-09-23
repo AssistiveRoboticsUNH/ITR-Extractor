@@ -70,6 +70,7 @@ def pairwise_gather(input_var):
 			if(i != j):
 				indices.append([[i], [j]])
 
+	print("input_var:", input_var, input_var.get_shape())
 	return tf.gather_nd(input_var, indices, name="pairwise_gather")
 
 ############################
@@ -216,4 +217,3 @@ if __name__ == '__main__':
 		os.makedirs(FLAGS.dst_directory)
 
 	main(FLAGS.iad_file)
-	
