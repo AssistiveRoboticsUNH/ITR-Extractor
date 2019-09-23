@@ -123,7 +123,7 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 		plt.suptitle('Losses')
 
 		plt.legend()
-		plt.show()
+		#plt.show()
 		plt.savefig("accs_losses.png")
 
 
