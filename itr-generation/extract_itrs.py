@@ -206,7 +206,7 @@ def main(input_dir):
 				iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-l]], 'constant', constant_values=0)
 			else:
 				iad = iad[:,:FLAGS.pad_length]
-			print("iad:", iad.shape)
+			print("iad:", iad.shape, l, FLAGS.pad_length)
 
 			data.append(iad)
 			labels.append(l)
