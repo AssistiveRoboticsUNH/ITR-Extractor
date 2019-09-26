@@ -12,8 +12,11 @@ parser = argparse.ArgumentParser(description='Generate IADs from input files')
 parser.add_argument('iad_dir', help='The input file')
 parser.add_argument('pad_length', type=int, help='The length to pad the file')
 
-parser.add_argument('--prefix', nargs='?', type=str, default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
-parser.add_argument('--dst_directory', nargs='?', type=str, default='generated_itrs/', help='where the IADs should be stored')
+parser.add_argument('--prefix', nargs='?', default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
+parser.add_argument('--dst_directory', nargs='?', default='generated_itrs/', help='where the IADs should be stored')
+parser.add_argument('--gpu_memory', nargs='?', type=float, default=0.5, help='where the IADs should be stored')
+
+
 
 FLAGS = parser.parse_args()
 
@@ -221,7 +224,7 @@ def main(input_dir):
 		itr_extractor = generate_pairwise_projections(ph)
 
 		# prevent TF from consuming entire GPU
-		gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.25)
+		gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_memory)
 
 		with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
 			sess.run(tf.local_variables_initializer())
