@@ -184,8 +184,6 @@ def main(input_dir):
 		group[layer].append(f)
 
 	for i in range(5):
-		for f in group[i]:
-			print(i, f)
 
 		data, labels, lengths = [],[],[]
 		for filename in group[i]:
@@ -200,13 +198,10 @@ def main(input_dir):
 			iad *= 2
 			iad -= 1
 
-			#print("iad:", iad.shape)
-
 			if (FLAGS.pad_length > z):
 				iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-z]], 'constant', constant_values=0)
 			else:
 				iad = iad[:,:FLAGS.pad_length]
-			print("iad:", iad.shape, z, FLAGS.pad_length)
 
 			data.append(iad)
 			labels.append(l)
@@ -215,8 +210,6 @@ def main(input_dir):
 		data = np.array(data)
 		labels = np.array(labels)
 		lengths = np.array(lengths)
-
-		print("data:", data.shape, data.shape[0])
 
 		###############################
 		# Extract ITRs
