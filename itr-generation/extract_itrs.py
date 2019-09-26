@@ -173,7 +173,7 @@ def main(input_dir):
 	#provide filenames and generate and save the ITRs into a nump array
 	print("opening directory: "+input_dir)
 
-	all_filenames = [f for f in os.listdir(input_dir) if ".npz" in f]
+	all_filenames = [f for f in os.listdir(input_dir) if ".npz" in f and "min_max" not in f]
 	all_filenames.sort()
 
 	group = []
