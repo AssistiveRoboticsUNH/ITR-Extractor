@@ -189,7 +189,7 @@ def main(input_dir):
 		for filename in group[i]:
 
 			if ".npz" in f:
-				f = np.load(filename)
+				f = np.load(os.path.join(input_dir, filename))
 
 				# clip the data for values outside of the expected range
 				d = np.clip(f["data"], 0.0, 1.0)
