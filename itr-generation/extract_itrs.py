@@ -200,7 +200,7 @@ def main(input_dir):
 			iad *= 2
 			iad -= 1
 
-			print("iad:", iad.shape)
+			#print("iad:", iad.shape)
 
 			if (FLAGS.pad_length > l):
 				iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-l]], 'constant', constant_values=0)
