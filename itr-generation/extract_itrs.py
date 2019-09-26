@@ -9,7 +9,8 @@ import itr_matcher
 import argparse
 parser = argparse.ArgumentParser(description='Generate IADs from input files')
 #required command line args
-parser.add_argument('iad_file', help='The input file')
+parser.add_argument('iad_dir', help='The input file')
+parser.add_argument('pad_length', help='The length to pad the file')
 
 parser.add_argument('--prefix', nargs='?', type=str, default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
 parser.add_argument('--dst_directory', nargs='?', type=str, default='generated_itrs/', help='where the IADs should be stored')
@@ -168,19 +169,25 @@ def extract_itrs(projections):
 # Main
 ############################
 
-def main(input_filename):
+def main(input_dir):
 	#provide filenames and generate and save the ITRs into a nump array
-	print("opening file: "+input_filename)
+	print("opening directory: "+input_filename)
 
-	f = np.load(input_filename)
-	data, labels, lengths = f["data"], f["label"], f["length"]
-	
-	# clip the data for values outside of the expected range
-	data = np.clip(data, 0.0, 1.0)
+	data, labels, lengths = [],[],[]
 
-	# scale the data to be between -1 and 1
-	data *= 2
-	data -= 1
+	for filename in os.listdir(input_dir) if ".npz" in f:
+		f = np.load(filename)
+
+		# clip the data for values outside of the expected range
+		d = np.clip(f["data"], 0.0, 1.0)
+
+		# scale the data to be between -1 and 1
+		d *= 2
+		d -= 1
+
+		data.append(d)
+		labels.append(f["label"])
+		lengths.append(f["length"])
 
 	###############################
 	# Extract ITRs
@@ -188,7 +195,7 @@ def main(input_filename):
 
 	# get the pairwise projection (one dimensional representations of the data)
 	print (data.shape)
-	ph = tf.placeholder(tf.float32, shape=(data.shape[1],data.shape[2]),name="input_ph")
+	ph = tf.placeholder(tf.float32, shape=(data.shape[1],FLAGS.pad_length),name="input_ph")
 	itr_extractor = generate_pairwise_projections(ph)
 
 	# prevent TF from consuming entire GPU
@@ -202,7 +209,8 @@ def main(input_filename):
 		itrs = []
 		for i in range(len(data)):
 			print("Processing file {:6d}/{:6d}".format(i, len(data)))
-			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
+			iad = np.pad(data[i], [[0,0],[0,FLAGS.pad_length-lengths[i]]], 'constant', constant_value=0)
+			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: iad})
 			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
 
 		#stack ITRs and save
@@ -216,4 +224,4 @@ if __name__ == '__main__':
 	if (not os.path.exists(FLAGS.dst_directory)):
 		os.makedirs(FLAGS.dst_directory)
 
-	main(FLAGS.iad_file)
+	main(FLAGS.iad_dir)
