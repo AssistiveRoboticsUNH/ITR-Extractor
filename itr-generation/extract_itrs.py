@@ -180,6 +180,7 @@ def main(input_dir):
 	for i in range(5):
 		group.append([])
 	for f in all_filenames:
+		print(f, f[-5:-4])
 		layer = int(f[-5:-4])
 		group[layer].append(f)
 	
