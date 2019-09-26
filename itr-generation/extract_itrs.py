@@ -187,14 +187,14 @@ def main(input_dir):
 		for f in group[i]:
 			print(i, f)
 
-
 		data, labels, lengths = [],[],[]
 		for filename in group[i]:
 
 			f = np.load(os.path.join(input_dir, filename))
+			d, l, z = f["data"], f["label"], f["length"]
 
 			# clip the data for values outside of the expected range
-			iad = np.clip(f["data"], 0.0, 1.0)
+			iad = np.clip(d, 0.0, 1.0)
 
 			# scale the data to be between -1 and 1
 			iad *= 2
@@ -202,12 +202,15 @@ def main(input_dir):
 
 			print("iad:", iad.shape)
 
-			iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-f["length"]]], 'constant', constant_values=0)
+			if (FLAGS.pad_length > l):
+				iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-l]], 'constant', constant_values=0)
+			else:
+				iad = iad[:,:FLAGS.pad_length]
 			print("iad:", iad.shape)
 
 			data.append(iad)
-			labels.append(f["label"])
-			lengths.append(f["length"])
+			labels.append(l)
+			lengths.append(z)
 
 		data = np.array(data)
 		labels = np.array(labels)
