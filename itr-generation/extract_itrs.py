@@ -176,7 +176,7 @@ def main(input_dir):
 	data, labels, lengths = [],[],[]
 
 	for filename in os.listdir(input_dir):
-		if ".npz" in f
+		if ".npz" in f:
 			f = np.load(filename)
 
 			# clip the data for values outside of the expected range
