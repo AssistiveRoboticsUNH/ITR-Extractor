@@ -175,19 +175,20 @@ def main(input_dir):
 
 	data, labels, lengths = [],[],[]
 
-	for filename in os.listdir(input_dir) if ".npz" in f:
-		f = np.load(filename)
+	for filename in os.listdir(input_dir):
+		if ".npz" in f
+			f = np.load(filename)
 
-		# clip the data for values outside of the expected range
-		d = np.clip(f["data"], 0.0, 1.0)
+			# clip the data for values outside of the expected range
+			d = np.clip(f["data"], 0.0, 1.0)
 
-		# scale the data to be between -1 and 1
-		d *= 2
-		d -= 1
+			# scale the data to be between -1 and 1
+			d *= 2
+			d -= 1
 
-		data.append(d)
-		labels.append(f["label"])
-		lengths.append(f["length"])
+			data.append(d)
+			labels.append(f["label"])
+			lengths.append(f["length"])
 
 	###############################
 	# Extract ITRs
