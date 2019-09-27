@@ -172,78 +172,102 @@ def extract_itrs(projections):
 # Main
 ############################
 
+def parse_iadlist(iad_dir, prefix):
+    '''Opena dn parse a .iadlist file'''
+
+    iadlist_filename = os.path.join(iad_dir, prefix+".iadlist")
+
+    try:
+        ifile = open (iadlist_filename, 'r')
+    except:
+        print("File doesn't exist: "+ iadlist_filename)
+        sys.exit(1)
+    
+    iad_groups = []
+
+    line = ifile.readline()
+    while(len(line) > 0):
+        filename_group = [os.path.join(iad_dir, f) for f in line.split()]
+        iad_groups.append(filename_group)
+        line = ifile.readline()
+    return iad_groups
+
+def extract_itrs_from_filename_group(dataset, layer, prefix):
+	data, labels, lengths = [],[],[]
+	for file_group in dataset:
+
+		f = np.load(os.path.join(input_dir, file_group[layer]))
+		d, l, z = f["data"], f["label"], f["length"]
+
+		# clip the data for values outside of the expected range
+		iad = np.clip(d, 0.0, 1.0)
+
+		# scale the data to be between -1 and 1
+		iad *= 2
+		iad -= 1
+
+		if (FLAGS.pad_length > z):
+			iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-z]], 'constant', constant_values=0)
+		else:
+			iad = iad[:,:FLAGS.pad_length]
+
+		data.append(iad)
+		labels.append(l)
+		lengths.append(z)
+
+	data = np.array(data)
+	labels = np.array(labels)
+	lengths = np.array(lengths)
+
+	###############################
+	# Extract ITRs
+	###############################
+
+	# get the pairwise projection (one dimensional representations of the data)
+	#print (data.shape)
+	ph = tf.placeholder(tf.float32, shape=(data.shape[1],FLAGS.pad_length),name="input_ph")
+	itr_extractor = generate_pairwise_projections(ph)
+
+	# prevent TF from consuming entire GPU
+	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_memory)
+
+	with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
+		sess.run(tf.local_variables_initializer())
+		sess.run(tf.global_variables_initializer())
+
+		# get the pairwise projection and then extract the ITRs
+		itrs = []
+		for i in range(len(data)):
+			print("Processing file {:6d}/{:6d}".format(i, len(data)))
+			
+			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
+			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
+
+		#stack ITRs and save
+		filename = os.path.join(FLAGS.dst_directory, prefix)
+		if (os.path.exists(filename+".npz")):
+			filename += "_"+datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
+		print("saving ITRs together to file: {0}".format(filename))
+		np.savez(filename+".npz", data=np.array(itrs), label=labels)
+
 def main(input_dir):
 	#provide filenames and generate and save the ITRs into a nump array
 	print("opening directory: "+input_dir)
 
-	all_filenames = [f for f in os.listdir(input_dir) if ".npz" in f and "min_max" not in f]
-	all_filenames.sort()
-
-	group = []
-	for i in range(5):
-		group.append([])
-	for f in all_filenames:
-		layer = int(f[-5:-4])
-		group[layer].append(f)
+	train_dataset = parse_iadlist(args.iad_dir, "train")
+	test_dataset = parse_iadlist(args.iad_dir, "test")
 
 	for i in range(5):
 
-		data, labels, lengths = [],[],[]
-		for filename in group[i]:
+		prefix = FLAGS.prefix+"_train_"+str(i)
+		extract_itrs_from_filename_group(train_dataset, i, prefix)
+		tf.reset_default_graph()
 
-			f = np.load(os.path.join(input_dir, filename))
-			d, l, z = f["data"], f["label"], f["length"]
+		prefix = FLAGS.prefix+"_test_"+str(i)
+		extract_itrs_from_filename_group(test_dataset, i, prefix)
+		tf.reset_default_graph()
+		
 
-			# clip the data for values outside of the expected range
-			iad = np.clip(d, 0.0, 1.0)
-
-			# scale the data to be between -1 and 1
-			iad *= 2
-			iad -= 1
-
-			if (FLAGS.pad_length > z):
-				iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-z]], 'constant', constant_values=0)
-			else:
-				iad = iad[:,:FLAGS.pad_length]
-
-			data.append(iad)
-			labels.append(l)
-			lengths.append(z)
-
-		data = np.array(data)
-		labels = np.array(labels)
-		lengths = np.array(lengths)
-
-		###############################
-		# Extract ITRs
-		###############################
-
-		# get the pairwise projection (one dimensional representations of the data)
-		#print (data.shape)
-		ph = tf.placeholder(tf.float32, shape=(data.shape[1],FLAGS.pad_length),name="input_ph")
-		itr_extractor = generate_pairwise_projections(ph)
-
-		# prevent TF from consuming entire GPU
-		gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_memory)
-
-		with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
-			sess.run(tf.local_variables_initializer())
-			sess.run(tf.global_variables_initializer())
-
-			# get the pairwise projection and then extract the ITRs
-			itrs = []
-			for i in range(len(data)):
-				print("Processing file {:6d}/{:6d}".format(i, len(data)))
-				
-				pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
-				itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
-
-			#stack ITRs and save
-			filename = os.path.join(FLAGS.dst_directory, FLAGS.prefix)
-			if (os.path.exists(filename+".npz")):
-				filename += "_"+datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
-			print("saving ITRs together to file: {0}".format(filename))
-			np.savez(filename+".npz", data=np.array(itrs), label=labels)
 
 if __name__ == '__main__':
 	if (not os.path.exists(FLAGS.dst_directory)):
