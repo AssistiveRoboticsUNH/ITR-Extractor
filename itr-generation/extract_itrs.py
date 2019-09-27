@@ -192,7 +192,7 @@ def parse_iadlist(iad_dir, prefix):
         line = ifile.readline()
     return iad_groups
 
-def extract_itrs_from_filename_group(dataset, layer, prefix):
+def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir):
 	data, labels, lengths = [],[],[]
 	for file_group in dataset:
 
@@ -260,11 +260,11 @@ def main(input_dir):
 	for i in range(5):
 
 		prefix = FLAGS.prefix+"_train_"+str(i)
-		extract_itrs_from_filename_group(train_dataset, i, prefix)
+		extract_itrs_from_filename_group(train_dataset, i, prefix, input_dir)
 		tf.reset_default_graph()
 
 		prefix = FLAGS.prefix+"_test_"+str(i)
-		extract_itrs_from_filename_group(test_dataset, i, prefix)
+		extract_itrs_from_filename_group(test_dataset, i, prefix, input_dir)
 		tf.reset_default_graph()
 		
 
