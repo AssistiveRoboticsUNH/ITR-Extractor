@@ -196,7 +196,7 @@ def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir):
 	data, labels, lengths = [],[],[]
 	for file_group in dataset:
 
-		f = np.load(os.path.join(input_dir, file_group[layer]))
+		f = np.load(file_group[layer])
 		d, l, z = f["data"], f["label"], f["length"]
 
 		# clip the data for values outside of the expected range
