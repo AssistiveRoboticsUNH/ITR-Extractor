@@ -254,8 +254,8 @@ def main(input_dir):
 	#provide filenames and generate and save the ITRs into a nump array
 	print("opening directory: "+input_dir)
 
-	train_dataset = parse_iadlist(args.iad_dir, "train")
-	test_dataset = parse_iadlist(args.iad_dir, "test")
+	train_dataset = parse_iadlist(FLAGS.iad_dir, "train")
+	test_dataset = parse_iadlist(FLAGS.iad_dir, "test")
 
 	for i in range(5):
 
