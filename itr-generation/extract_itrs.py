@@ -196,14 +196,15 @@ def parse_iadlist(iad_dir, prefix):
 
 def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_keep_indexes=None):
 	data, labels, lengths = [],[],[]
-	for layer, file_group in enumerate(dataset):
+	for l, file_group in enumerate(dataset):
 
+		assert os.path.exists(file_group[layer]), "File cannot be found: "+file_group[layer]
 		f = np.load(file_group[layer])
 		d, l, z = f["data"], f["label"], f["length"]
 
 		# prune irrelevant features
 		if(pruning_keep_indexes != None):
-			idx = pruning_keep_indexes[layer]
+			idx = pruning_keep_indexes[l]
 			d = d[idx]
 
 		# clip the data for values outside of the expected range
