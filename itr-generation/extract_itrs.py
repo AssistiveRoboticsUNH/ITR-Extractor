@@ -20,8 +20,6 @@ parser.add_argument('--prefix', nargs='?', default="complete", help='the prefix 
 parser.add_argument('--dst_directory', nargs='?', default='generated_itrs/', help='where the IADs should be stored')
 parser.add_argument('--gpu_memory', nargs='?', type=float, default=0.5, help='where the IADs should be stored')
 
-
-
 FLAGS = parser.parse_args()
 
 '''
@@ -196,12 +194,17 @@ def parse_iadlist(iad_dir, prefix):
         line = ifile.readline()
     return iad_groups
 
-def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir):
+def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_keep_indexes=None):
 	data, labels, lengths = [],[],[]
-	for file_group in dataset:
+	for layer, file_group in enumerate(dataset):
 
 		f = np.load(file_group[layer])
 		d, l, z = f["data"], f["label"], f["length"]
+
+		# prune irrelevant features
+		if(pruning_keep_indexes != None):
+			idx = pruning_keep_indexes[layer]
+			d = d[idx]
 
 		# clip the data for values outside of the expected range
 		iad = np.clip(d, 0.0, 1.0)
@@ -262,20 +265,20 @@ def main(input_dir):
 	test_dataset = parse_iadlist(FLAGS.iad_dir, "test")
 
 	pruning_keep_indexes = None
-	if(args.feature_rank_file):
-		sys.path.append("../iad-generation/")
+	if(FLAGS.feature_rank_file):
+		sys.path.append("../../IAD-Generator/iad-generation/")
 		from feature_rank_utils import get_top_n_feature_indexes
-		pruning_keep_indexes = get_top_n_feature_indexes(args.feature_rank_file, args.feature_retain_count)
+		pruning_keep_indexes = get_top_n_feature_indexes(FLAGS.feature_rank_file, FLAGS.feature_retain_count)
 
 
 	for i in range(5):
 
 		prefix = FLAGS.prefix+"_train_"+str(i)
-		extract_itrs_from_filename_group(train_dataset, i, prefix, input_dir)
+		extract_itrs_from_filename_group(train_dataset, i, prefix, input_dir, pruning_keep_indexes)
 		tf.reset_default_graph()
 
 		prefix = FLAGS.prefix+"_test_"+str(i)
-		extract_itrs_from_filename_group(test_dataset, i, prefix, input_dir)
+		extract_itrs_from_filename_group(test_dataset, i, prefix, input_dir, pruning_keep_indexes)
 		tf.reset_default_graph()
 		
 
@@ -285,3 +288,6 @@ if __name__ == '__main__':
 		os.makedirs(FLAGS.dst_directory)
 
 	main(FLAGS.iad_dir)
+
+
+# python extract_itrs.py ../../IAD-Generator/iad-generation/bm_sep_01/ 256 --feature_rank_file ../../IAD-Generator/iad-generation/feature_ranks.npz --feature_retain_count 64 --dst_directory bm_sep_itr --prefix train
