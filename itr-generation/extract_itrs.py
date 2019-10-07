@@ -198,6 +198,8 @@ def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_
 	data, labels, lengths = [],[],[]
 	for l, file_group in enumerate(dataset):
 
+		print(l, file_group)
+
 		assert os.path.exists(file_group[layer]), "File cannot be found: "+file_group[layer]
 		f = np.load(file_group[layer])
 		d, l, z = f["data"], f["label"], f["length"]
