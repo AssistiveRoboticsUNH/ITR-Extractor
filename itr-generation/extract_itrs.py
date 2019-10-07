@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np 
 
 from datetime import datetime
-import os
+import os, sys
 
 import itr_matcher
 
@@ -11,6 +11,10 @@ parser = argparse.ArgumentParser(description='Generate IADs from input files')
 #required command line args
 parser.add_argument('iad_dir', help='The input file')
 parser.add_argument('pad_length', type=int, help='The length to pad the file')
+
+#feature pruning command line args
+parser.add_argument('--feature_rank_file', nargs='?', type=str, default=None, help='a file containing the rankings of the features')
+parser.add_argument('--feature_retain_count', nargs='?', type=int, default=-1, help='the number of features to remove')
 
 parser.add_argument('--prefix', nargs='?', default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
 parser.add_argument('--dst_directory', nargs='?', default='generated_itrs/', help='where the IADs should be stored')
@@ -256,6 +260,13 @@ def main(input_dir):
 
 	train_dataset = parse_iadlist(FLAGS.iad_dir, "train")
 	test_dataset = parse_iadlist(FLAGS.iad_dir, "test")
+
+	pruning_keep_indexes = None
+	if(args.feature_rank_file):
+		sys.path.append("../iad-generation/")
+		from feature_rank_utils import get_top_n_feature_indexes
+		pruning_keep_indexes = get_top_n_feature_indexes(args.feature_rank_file, args.feature_retain_count)
+
 
 	for i in range(5):
 
