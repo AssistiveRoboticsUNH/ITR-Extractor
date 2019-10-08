@@ -11,9 +11,11 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser(description="Ensemble model processor")
 parser.add_argument('model', help='model to save (when training) or to load (when testing)')
 parser.add_argument('num_classes', type=int, help='the number of classes in the dataset')
+parser.add_argument('prefix', help='"train" or "test"')
+parser.add_argument('itr_prefix', help='prefix used when generating the ITRs')
 
-parser.add_argument('--train', default='', help='.list file containing the train files')
-parser.add_argument('--test', default='', help='.list file containing the test files')
+#parser.add_argument('--train', default='', help='.list file containing the train files')
+#parser.add_argument('--test', default='', help='.list file containing the test files')
 parser.add_argument('--batch_size', type=int, default=10, help='.list file containing the test files')
 parser.add_argument('--epochs', type=int, default=10, help='.list file containing the test files')
 
@@ -136,6 +138,8 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 		saver.save(sess, model_name+"/model")
 		print("Model saved")
 
+		tf.reset_default_graph()
+
 
 
 def test(model_name, num_classes, input_shape, test_data, test_label):
@@ -162,15 +166,21 @@ def test(model_name, num_classes, input_shape, test_data, test_label):
 
 if __name__ == '__main__':
 
-	if(not os.path.exists(args.model)):
-		os.makedirs(args.model)
+	for layer in range(5):
 
-	test_data, test_label = file_io(args.test)
-	train_input_shape = [args.batch_size, test_data.shape[1], test_data.shape[2]]
-	test_input_shape =  [              1, test_data.shape[1], test_data.shape[2]]
+		model_dir = os.path.join(args.model, str(layer+1).zfill(2))
+		if(not os.path.exists(model_dir):
+			os.makedirs(model_dir)
 
-	if(len(args.train) != 0):
-		train_data, train_label = file_io(args.train)
-		train(args.model, args.num_classes, train_input_shape, train_data, train_label, test_data, test_label)
-	else:
-		test(args.model, args.num_classes, test_input_shape, test_data, test_label)
+		train_filename = args.itr_prefix + "_train_" + str(layer) + ".npz"
+		test_filename = args.itr_prefix + "_test_" + str(layer) + ".npz"
+
+		test_data, test_label = file_io(test_filename)
+		train_input_shape = [args.batch_size, test_data.shape[1], test_data.shape[2]]
+		test_input_shape =  [              1, test_data.shape[1], test_data.shape[2]]
+
+		if(args.prefix == "train"):
+			train_data, train_label = file_io(train_filename)
+			train(model_dir, args.num_classes, train_input_shape, train_data, train_label, test_data, test_label)
+		else:
+			test(model_dir, args.num_classes, test_input_shape, test_data, test_label)
