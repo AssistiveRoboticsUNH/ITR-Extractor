@@ -169,7 +169,7 @@ if __name__ == '__main__':
 	for layer in range(5):
 
 		model_dir = os.path.join(args.model, str(layer+1).zfill(2))
-		if(not os.path.exists(model_dir):
+		if(not os.path.exists(model_dir)):
 			os.makedirs(model_dir)
 
 		train_filename = args.itr_prefix + "_train_" + str(layer) + ".npz"
