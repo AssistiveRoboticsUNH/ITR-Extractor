@@ -138,6 +138,8 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 		saver.save(sess, model_name+"/model")
 		print("Model saved")
 
+	tf.reset_default_graph()
+
 
 
 def test(model_name, num_classes, input_shape, test_data, test_label):
