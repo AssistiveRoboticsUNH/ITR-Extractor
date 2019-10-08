@@ -160,6 +160,9 @@ def test(model_name, num_classes, input_shape, test_data, test_label):
 
 if __name__ == '__main__':
 
+	if(not os.path.exists(args.model)):
+		os.makedirs(args.model)
+
 	test_data, test_label = file_io(args.test)
 	train_input_shape = [args.batch_size, test_data.shape[1], test_data.shape[2]]
 	test_input_shape =  [              1, test_data.shape[1], test_data.shape[2]]
