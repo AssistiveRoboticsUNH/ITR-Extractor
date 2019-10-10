@@ -158,7 +158,7 @@ def test(model_name, num_classes, input_shape, test_data, test_label):
 
 		for idx in range(len(test_label)):
 			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: test_data[None, idx], placeholders["output"]: test_label[None, idx]})
-
+	tf.reset_default_graph()
 	print("Test - "),
 	print("accuracy: {:.6f}".format(tst_acc)),
 	print(", loss: {0}".format(tst_loss))

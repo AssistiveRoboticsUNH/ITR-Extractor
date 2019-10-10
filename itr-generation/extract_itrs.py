@@ -10,6 +10,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Generate IADs from input files')
 #required command line args
 parser.add_argument('iad_dir', help='The input file')
+parser.add_argument('iadlist', help='An iadlist File')
 parser.add_argument('pad_length', type=int, help='The length to pad the file')
 
 #feature pruning command line args
@@ -195,7 +196,7 @@ def parse_iadlist(iad_dir, prefix):
     return iad_groups
 
 def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_keep_indexes=None):
-	data, labels, lengths = [],[],[]
+	example_name, data, labels, lengths = [],[],[],[]
 	for file_group in dataset:
 
 		assert os.path.exists(file_group[layer]), "File cannot be found: "+file_group[layer]
@@ -219,6 +220,7 @@ def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_
 		else:
 			iad = iad[:,:FLAGS.pad_length]
 
+		example_name.append(file_group[layer][:-len(".npz")])
 		data.append(iad)
 		labels.append(l)
 		lengths.append(z)
@@ -244,26 +246,21 @@ def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_
 		sess.run(tf.global_variables_initializer())
 
 		# get the pairwise projection and then extract the ITRs
-		itrs = []
 		for i in range(len(data)):
 			print("Processing file {:6d}/{:6d}".format(i, len(data)))
 			
 			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
-			itrs.append(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
+			itr = np.array(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
 
-		#stack ITRs and save
-		filename = os.path.join(FLAGS.dst_directory, prefix)
-		if (os.path.exists(filename+".npz")):
-			filename += "_"+datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
-		print("saving ITRs together to file: {0}".format(filename))
-		np.savez(filename+".npz", data=np.array(itrs), label=labels)
+			filename = os.path.join(FLAGS.dst_directory, example_name[i])+".npz"
+			np.savez(filename, data=itr, label=labels[i])
+
 
 def main(input_dir):
 	#provide filenames and generate and save the ITRs into a nump array
 	print("opening directory: "+input_dir)
 
-	train_dataset = parse_iadlist(FLAGS.iad_dir, "train")
-	test_dataset = parse_iadlist(FLAGS.iad_dir, "test")
+	iadlist_filename = os.path.join(FLAGS.iad_dir,FLAGS.iadlist)
 
 	pruning_keep_indexes = None
 	if(FLAGS.feature_rank_file):
