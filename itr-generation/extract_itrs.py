@@ -287,4 +287,4 @@ def extract_itrs(model_type, dataset_dir, csv_file, pad_length, dataset_id, feat
 
 
 if __name__ == '__main__':
-	extract_itrs(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_file, FLAGS.pad_length, FLAGS.dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory)
+	extract_itrs(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_filename, FLAGS.pad_length, FLAGS.dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory)
