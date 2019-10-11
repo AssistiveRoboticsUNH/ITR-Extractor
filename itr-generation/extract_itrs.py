@@ -26,7 +26,7 @@ parser.add_argument('--gpu', default="0", help='gpu to run on')
 FLAGS = parser.parse_args()
 
 IAD_DATA_PATH = os.path.join(FLAGS.dataset_dir, 'iad')
-DATASET_ID_PATH = os.path.join('itr', "dataset_"str(25*FLAGS.dataset_id))
+DATASET_ID_PATH = os.path.join('itr', "dataset_"+str(25*FLAGS.dataset_id))
 ITR_DATA_PATH = os.path.join(FLAGS.dataset_dir, DATASET_ID_PATH)
 
 
