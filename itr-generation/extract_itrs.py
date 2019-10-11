@@ -209,7 +209,7 @@ def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
 
 		# get the pairwise projection and then extract the ITRs
 		for i, ex in enumerate(csv_contents):
-			print("COnverting IAD to ITR {:6d}/{:6d}".format(i, len(csv_contents)))
+			print("Converting IAD to ITR {:6d}/{:6d}".format(i, len(csv_contents)))
 
 			f = np.load(csv_contents[i]['iad_path_'+str(layer)])
 			d, z = f["data"], f["length"]
@@ -251,6 +251,7 @@ if __name__ == '__main__':
 	#provide filenames and generate and save the ITRs into a nump array
 	try:
 		csv_contents = [ex for ex in read_csv(FLAGS.csv_filename) if ex['dataset_id'] <= FLAGS.dataset_id]
+		csv_contents = csv_contents[:5]
 	except:
 		print("Cannot open CSV file: "+ FLAGS.csv_filename)
 
