@@ -224,7 +224,7 @@ def extract_itrs_by_layer(dataset_dir, dataset_id, gpu_memory, csv_contents, lay
 
 			# save ITR
 			dataset_id_path = os.path.join('itr', "dataset_"+str(25*dataset_id))
-			itr_data_path = os.path.join(FLAGS.dataset_dir, dataset_id_path)
+			itr_data_path = os.path.join(dataset_dir, dataset_id_path)
 
 			label_path = os.path.join(itr_data_path, ex['label_name'])
 			if(not os.path.exists(label_path)):
