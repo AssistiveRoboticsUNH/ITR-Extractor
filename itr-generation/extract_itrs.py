@@ -253,7 +253,7 @@ def extract_itrs_by_layer(dataset_dir, dataset_id, gpu_memory, csv_contents, lay
 
 	tf.reset_default_graph()
 
-def extract_itrs(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
+def extract_itrs_all_layers(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
 	#provide filenames and generate and save the ITRs into a nump array
 	try:
 		csv_contents = [ex for ex in read_csv(csv_file) if ex['dataset_id'] <= dataset_id]
@@ -287,4 +287,4 @@ def extract_itrs(model_type, dataset_dir, csv_file, pad_length, dataset_id, feat
 
 
 if __name__ == '__main__':
-	extract_itrs(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_filename, FLAGS.pad_length, FLAGS.dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory)
+	extract_itrs_all_layers(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_filename, FLAGS.pad_length, FLAGS.dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory)
