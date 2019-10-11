@@ -34,8 +34,12 @@ sys.path.append("../../IAD-Generator/iad-generation/")
 from feature_rank_utils import get_top_n_feature_indexes
 from csv_utils import read_csv
 
-input_shape_i3d = [(64, FLAGS.pad_length/2), (192, FLAGS.pad_length/2), (480, FLAGS.pad_length/2), (832, FLAGS.pad_length/4), (1024, FLAGS.pad_length/8)]
-input_shape = input_shape_i3d
+input_shape_fp = [  (min(  64, FLAGS.feature_retain_count), FLAGS.pad_length/2), 
+                    (min( 192, FLAGS.feature_retain_count), FLAGS.pad_length/2), 
+                    (min( 480, FLAGS.feature_retain_count), FLAGS.pad_length/2), 
+                    (min( 832, FLAGS.feature_retain_count), FLAGS.pad_length/4), 
+                    (min(1024, FLAGS.feature_retain_count), FLAGS.pad_length/8)]
+input_shape = input_shape_fp
 
 '''
 #0 - empty
