@@ -240,7 +240,6 @@ def extract_itrs_all_layers(model_type, dataset_dir, csv_file, pad_length, datas
 	#provide filenames and generate and save the ITRs into a nump array
 	try:
 		csv_contents = [ex for ex in read_csv(csv_file) if ex['dataset_id'] <= dataset_id]
-		csv_contents = csv_contents[:5]
 	except:
 		print("Cannot open CSV file: "+ csv_file)
 
