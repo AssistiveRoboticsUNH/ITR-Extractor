@@ -267,7 +267,7 @@ if __name__ == '__main__':
 	pruning_keep_indexes = None
 	if(FLAGS.feature_retain_count and FLAGS.dataset_id):
 		ranking_file = os.path.join(IAD_DATA_PATH, "feature_ranks_"+str(FLAGS.dataset_id * 25)+".npz")
-		assert os.path.exists(filename), "Cannot locate Feature Ranking file: "+ ranking_file
+		assert os.path.exists(ranking_file), "Cannot locate Feature Ranking file: "+ ranking_file
 		pruning_keep_indexes = get_top_n_feature_indexes(ranking_file, FLAGS.feature_retain_count)
 
 	# Generate the ITRS, go by layer for efficiency
