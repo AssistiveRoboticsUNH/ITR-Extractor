@@ -25,21 +25,20 @@ parser.add_argument('--gpu', default="0", help='gpu to run on')
 
 FLAGS = parser.parse_args()
 
-IAD_DATA_PATH = os.path.join(FLAGS.dataset_dir, 'iad')
-DATASET_ID_PATH = os.path.join('itr', "dataset_"+str(25*FLAGS.dataset_id))
-ITR_DATA_PATH = os.path.join(FLAGS.dataset_dir, DATASET_ID_PATH)
+
+
 
 
 sys.path.append("../../IAD-Generator/iad-generation/")
 from feature_rank_utils import get_top_n_feature_indexes
 from csv_utils import read_csv
 
-input_shape_fp = [  (min(  64, FLAGS.feature_retain_count), FLAGS.pad_length/2), 
-                    (min( 192, FLAGS.feature_retain_count), FLAGS.pad_length/2), 
-                    (min( 480, FLAGS.feature_retain_count), FLAGS.pad_length/2), 
-                    (min( 832, FLAGS.feature_retain_count), FLAGS.pad_length/4), 
-                    (min(1024, FLAGS.feature_retain_count), FLAGS.pad_length/8)]
-input_shape = input_shape_fp
+get_input_shape = lambda num_features, pad_length: \
+				   [(min(  64, num_features), pad_length/2), 
+                    (min( 192, num_features), pad_length/2), 
+                    (min( 480, num_features), pad_length/2), 
+                    (min( 832, num_features), pad_length/4), 
+                    (min(1024, num_features), pad_length/8)]
 
 '''
 #0 - empty
@@ -192,20 +191,20 @@ def extract_itrs(projections):
 # Main
 ############################
 
-def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
+def extract_itrs_by_layer(dataset_dir, dataset_id, gpu_memory, csv_contents, layer, input_shape, pruning_keep_indexes=None):
 	###############################
 	# Extract ITRs
 	###############################
 
 	# get the pairwise projection (one dimensional representations of the data)
 	#print (data.shape)
-	ph = tf.placeholder(tf.float32, shape=input_shape[layer],name="input_ph")
+	ph = tf.placeholder(tf.float32, shape=input_shape,name="input_ph")
 	itr_extractor = generate_pairwise_projections(ph)
 
 	# prevent TF from consuming entire GPU
-	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_memory)
+	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_memory)
 
-	mod_pad_length = input_shape[layer][1]
+	mod_pad_length = input_shape[1]
 
 	with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
 		sess.run(tf.local_variables_initializer())
@@ -241,40 +240,51 @@ def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
 			itr = np.array(extract_itrs(pairwise_projections[:, :z+1]))
 
 			# save ITR
-			label_path = os.path.join(ITR_DATA_PATH, ex['label_name'])
+			dataset_id_path = os.path.join('itr', "dataset_"+str(25*dataset_id))
+			itr_data_path = os.path.join(FLAGS.dataset_dir, dataset_id_path)
+
+			label_path = os.path.join(itr_data_path, ex['label_name'])
 			if(not os.path.exists(label_path)):
 				os.makedirs(label_path)
 
 			file_location = os.path.join(ex['label_name'], ex['example_id'])
-			itr_file = os.path.join(ITR_DATA_PATH, file_location+"_"+str(layer)+".npz")
+			itr_file = os.path.join(itr_data_path, file_location+"_"+str(layer)+".npz")
 			np.savez(itr_file, data=itr, label=ex['label'])
 
 	tf.reset_default_graph()
 
-if __name__ == '__main__':
+def extract_itrs(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
 	#provide filenames and generate and save the ITRs into a nump array
 	try:
-		csv_contents = [ex for ex in read_csv(FLAGS.csv_filename) if ex['dataset_id'] <= FLAGS.dataset_id]
+		csv_contents = [ex for ex in read_csv(csv_file) if ex['dataset_id'] <= dataset_id]
 		csv_contents = csv_contents[:5]
 	except:
-		print("Cannot open CSV file: "+ FLAGS.csv_filename)
+		print("Cannot open CSV file: "+ csv_file)
 
 	# get the maximum frame length among the dataset and add the 
 	# full path name to the dict
+	iad_data_path = os.path.join(dataset_dir, 'iad')
+
 	for ex in csv_contents:
 		file_location = os.path.join(ex['label_name'], ex['example_id'])
 		for layer in range(5):
-			iad_file = os.path.join(IAD_DATA_PATH, file_location+"_"+str(layer)+".npz")
+			iad_file = os.path.join(iad_data_path, file_location+"_"+str(layer)+".npz")
 			assert os.path.exists(iad_file), "Cannot locate IAD file: "+ iad_file
 			ex['iad_path_'+str(layer)] = iad_file
 
 	# get the (depth, index) locations of which features to retain
 	pruning_keep_indexes = None
-	if(FLAGS.feature_retain_count and FLAGS.dataset_id):
-		ranking_file = os.path.join(IAD_DATA_PATH, "feature_ranks_"+str(FLAGS.dataset_id * 25)+".npz")
+	if(feature_retain_count and dataset_id):
+		ranking_file = os.path.join(iad_data_path, "feature_ranks_"+str(dataset_id * 25)+".npz")
 		assert os.path.exists(ranking_file), "Cannot locate Feature Ranking file: "+ ranking_file
-		pruning_keep_indexes = get_top_n_feature_indexes(ranking_file, FLAGS.feature_retain_count)
+		pruning_keep_indexes = get_top_n_feature_indexes(ranking_file, feature_retain_count)
 
 	# Generate the ITRS, go by layer for efficiency
+	input_shape = get_input_shape(feature_retain_count, pad_length)
+
 	for layer in range(5):
-		extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes)
+		extract_itrs_by_layer(dataset_dir, dataset_id, gpu_memory, csv_contents, layer, input_shape[layer], pruning_keep_indexes)
+
+
+if __name__ == '__main__':
+	extract_itrs(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_file, FLAGS.pad_length, FLAGS.dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory)
