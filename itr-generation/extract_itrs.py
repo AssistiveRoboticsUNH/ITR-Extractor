@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='Generate IADs from input files')
 #required command line args
 parser.add_argument('model_type', help='the type of model to use: I3D')
 
-parser.add_argument('dataset_dir', help='the directory whee the dataset is located')
+parser.add_argument('dataset_dir', help='the directory where the dataset is located')
 parser.add_argument('csv_filename', help='a csv file denoting the files in the dataset')
 
 parser.add_argument('pad_length', nargs='?', type=int, default=-1, help='the maximum length video to convert into an IAD')
@@ -26,7 +26,9 @@ parser.add_argument('--gpu', default="0", help='gpu to run on')
 FLAGS = parser.parse_args()
 
 IAD_DATA_PATH = os.path.join(FLAGS.dataset_dir, 'iad')
-ITR_DATA_PATH = os.path.join(FLAGS.dataset_dir, 'itr')
+DATASET_ID_PATH = os.path.join('itr', "dataset_"str(25*FLAGS.dataset_id))
+ITR_DATA_PATH = os.path.join(FLAGS.dataset_dir, DATASET_ID_PATH)
+
 
 sys.path.append("../../IAD-Generator/iad-generation/")
 from feature_rank_utils import get_top_n_feature_indexes
