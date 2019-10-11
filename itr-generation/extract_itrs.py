@@ -189,26 +189,13 @@ def extract_itrs(projections):
 ############################
 
 def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
-	data, labels, lengths = [],[],[]
-
-	
-
-		example_name.append(file_group[layer][:-len(".npz")])
-		data.append(iad)
-		labels.append(l)
-		lengths.append(z)
-
-	data = np.array(data)
-	labels = np.array(labels)
-	lengths = np.array(lengths)
-
 	###############################
 	# Extract ITRs
 	###############################
 
 	# get the pairwise projection (one dimensional representations of the data)
 	#print (data.shape)
-	ph = tf.placeholder(tf.float32, shape=(data.shape[1],FLAGS.pad_length),name="input_ph")
+	ph = tf.placeholder(tf.float32, shape=(input_shape[layer][0],FLAGS.pad_length),name="input_ph")
 	itr_extractor = generate_pairwise_projections(ph)
 
 	# prevent TF from consuming entire GPU
@@ -247,7 +234,7 @@ def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
 
 			# get the pairwise projection and then extract the ITRs
 			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
-			itr = np.array(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
+			itr = np.array(extract_itrs(pairwise_projections[:, :z+1]))
 
 			# save ITR
 			label_path = os.path.join(ITR_DATA_PATH, ex['label_name'])
