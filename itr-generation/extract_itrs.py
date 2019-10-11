@@ -9,19 +9,31 @@ import itr_matcher
 import argparse
 parser = argparse.ArgumentParser(description='Generate IADs from input files')
 #required command line args
-parser.add_argument('iad_dir', help='The input file')
-parser.add_argument('iadlist', help='An iadlist File')
-parser.add_argument('pad_length', type=int, help='The length to pad the file')
+parser.add_argument('model_type', help='the type of model to use: I3D')
+
+parser.add_argument('dataset_dir', help='the directory whee the dataset is located')
+parser.add_argument('csv_filename', help='a csv file denoting the files in the dataset')
+
+parser.add_argument('pad_length', nargs='?', type=int, default=-1, help='the maximum length video to convert into an IAD')
 
 #feature pruning command line args
-parser.add_argument('--feature_rank_file', nargs='?', type=str, default=None, help='a file containing the rankings of the features')
+parser.add_argument('--dataset_id', nargs='?', type=int, default=4, help='the dataset_id used by the csv file')
 parser.add_argument('--feature_retain_count', nargs='?', type=int, default=-1, help='the number of features to remove')
 
-parser.add_argument('--prefix', nargs='?', default="complete", help='the prefix to place infront of finished files <prefix>_<layer>.npz')
-parser.add_argument('--dst_directory', nargs='?', default='generated_itrs/', help='where the IADs should be stored')
-parser.add_argument('--gpu_memory', nargs='?', type=float, default=0.5, help='where the IADs should be stored')
+parser.add_argument('--gpu_memory', nargs='?', type=float, default=0.5, help='how much of the GPU should the process consume')
+parser.add_argument('--gpu', default="0", help='gpu to run on')
 
 FLAGS = parser.parse_args()
+
+IAD_DATA_PATH = os.path.join(FLAGS.dataset_dir, 'iad')
+ITR_DATA_PATH = os.path.join(FLAGS.dataset_dir, 'itr')
+
+sys.path.append("../../IAD-Generator/iad-generation/")
+from feature_rank_utils import get_top_n_feature_indexes
+from csv_utils import read_csv
+
+input_shape_i3d = [(64, FLAGS.pad_length/2), (192, FLAGS.pad_length/2), (480, FLAGS.pad_length/2), (832, FLAGS.pad_length/4), (1024, FLAGS.pad_length/8)]
+input_shape = input_shape_i3d
 
 '''
 #0 - empty
@@ -77,7 +89,6 @@ def pairwise_gather(input_var):
 			if(i != j):
 				indices.append([[i], [j]])
 
-	print("input_var:", input_var, input_var.get_shape())
 	return tf.gather_nd(input_var, indices, name="pairwise_gather")
 
 ############################
@@ -175,50 +186,10 @@ def extract_itrs(projections):
 # Main
 ############################
 
-def parse_iadlist(iad_dir, prefix):
-    '''Opena dn parse a .iadlist file'''
+def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
+	data, labels, lengths = [],[],[]
 
-    iadlist_filename = os.path.join(iad_dir, prefix+".iadlist")
-
-    try:
-        ifile = open (iadlist_filename, 'r')
-    except:
-        print("File doesn't exist: "+ iadlist_filename)
-        sys.exit(1)
-    
-    iad_groups = []
-
-    line = ifile.readline()
-    while(len(line) > 0):
-        filename_group = [os.path.join(iad_dir, f) for f in line.split()]
-        iad_groups.append(filename_group)
-        line = ifile.readline()
-    return iad_groups
-
-def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_keep_indexes=None):
-	example_name, data, labels, lengths = [],[],[],[]
-	for file_group in dataset:
-
-		assert os.path.exists(file_group[layer]), "File cannot be found: "+file_group[layer]
-		f = np.load(file_group[layer])
-		d, l, z = f["data"], f["label"], f["length"]
-
-		# prune irrelevant features
-		if(pruning_keep_indexes != None):
-			idx = pruning_keep_indexes[layer]
-			d = d[idx]
-
-		# clip the data for values outside of the expected range
-		iad = np.clip(d, 0.0, 1.0)
-
-		# scale the data to be between -1 and 1
-		iad *= 2
-		iad -= 1
-
-		if (FLAGS.pad_length > z):
-			iad = np.pad(iad, [[0,0],[0,FLAGS.pad_length-z]], 'constant', constant_values=0)
-		else:
-			iad = iad[:,:FLAGS.pad_length]
+	
 
 		example_name.append(file_group[layer][:-len(".npz")])
 		data.append(iad)
@@ -241,51 +212,75 @@ def extract_itrs_from_filename_group(dataset, layer, prefix, input_dir, pruning_
 	# prevent TF from consuming entire GPU
 	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=FLAGS.gpu_memory)
 
+	mod_pad_length = input_shape[layer][1]
+
 	with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
 		sess.run(tf.local_variables_initializer())
 		sess.run(tf.global_variables_initializer())
 
 		# get the pairwise projection and then extract the ITRs
-		for i in range(len(data)):
-			print("Processing file {:6d}/{:6d}".format(i, len(data)))
-			
+		for i, ex in enumerate(csv_contents):
+			print("COnverting IAD to ITR {:6d}/{:6d}".format(i, len(csv_contents)))
+
+			f = np.load(csv_contents['iad_path_'+str(layer)])
+			d, z = f["data"], f["length"]
+
+			# prune irrelevant features
+			if(pruning_keep_indexes != None):
+				idx = pruning_keep_indexes[layer]
+				d = d[idx]
+
+			# clip the data for values outside of the expected range
+			iad = np.clip(d, 0.0, 1.0)
+
+			# scale the data to be between -1 and 1
+			iad *= 2
+			iad -= 1
+
+			# prune file length so that it is equal to the pad_length
+			if (mod_pad_length > z):
+				iad = np.pad(iad, [[0,0],[0,mod_pad_length-z]], 'constant', constant_values=0)
+			else:
+				iad = iad[:,:mod_pad_length]
+
+			# get the pairwise projection and then extract the ITRs
 			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
 			itr = np.array(extract_itrs(pairwise_projections[:, :lengths[i]+1]))
 
-			filename = os.path.join(FLAGS.dst_directory, example_name[i])+".npz"
-			np.savez(filename, data=itr, label=labels[i])
+			# save ITR
+			label_path = os.path.join(ITR_DATA_PATH, ex['label_name'])
+			if(not os.path.exists(label_path)):
+				os.makedirs(label_path)
 
+			file_location = os.path.join(ex['label_name'], ex['example_id'])
+			itr_file = os.path.join(ITR_DATA_PATH, file_location+"_"+str(layer)+".npz")
+			np.savez(filename, data=itr, label=ex['label'])
 
-def main(input_dir):
-	#provide filenames and generate and save the ITRs into a nump array
-	print("opening directory: "+input_dir)
-
-	iadlist_filename = os.path.join(FLAGS.iad_dir,FLAGS.iadlist)
-
-	pruning_keep_indexes = None
-	if(FLAGS.feature_rank_file):
-		sys.path.append("../../IAD-Generator/iad-generation/")
-		from feature_rank_utils import get_top_n_feature_indexes
-		pruning_keep_indexes = get_top_n_feature_indexes(FLAGS.feature_rank_file, FLAGS.feature_retain_count)
-
-
-	for i in range(5):
-
-		prefix = FLAGS.prefix+"_train_"+str(i)
-		extract_itrs_from_filename_group(train_dataset, i, prefix, input_dir, pruning_keep_indexes)
-		tf.reset_default_graph()
-
-		prefix = FLAGS.prefix+"_test_"+str(i)
-		extract_itrs_from_filename_group(test_dataset, i, prefix, input_dir, pruning_keep_indexes)
-		tf.reset_default_graph()
-		
-
+	tf.reset_default_graph()
 
 if __name__ == '__main__':
-	if (not os.path.exists(FLAGS.dst_directory)):
-		os.makedirs(FLAGS.dst_directory)
+	#provide filenames and generate and save the ITRs into a nump array
+	try:
+		csv_contents = [ex for ex in read_csv(FLAGS.csv_filename) if ex['dataset_id'] <= FLAGS.dataset_id]
+	except:
+		print("Cannot open CSV file: "+ FLAGS.csv_filename)
 
-	main(FLAGS.iad_dir)
+	# get the maximum frame length among the dataset and add the 
+	# full path name to the dict
+	for ex in csv_contents:
+		file_location = os.path.join(ex['label_name'], ex['example_id'])
+		for layer in range(5):
+			iad_file = os.path.join(IAD_DATA_PATH, file_location+"_"+str(layer)+".npz")
+			assert os.path.exists(filename), "Cannot locate IAD file: "+ iad_file
+			ex['iad_path_'+str(layer)] = iad_file
 
+	# get the (depth, index) locations of which features to retain
+	pruning_keep_indexes = None
+	if(FLAGS.feature_retain_count and FLAGS.dataset_id):
+		ranking_file = os.path.join(IAD_DATA_PATH, "feature_ranks_"+str(FLAGS.dataset_id * 25)+".npz")
+		assert os.path.exists(filename), "Cannot locate Feature Ranking file: "+ ranking_file
+		pruning_keep_indexes = get_top_n_feature_indexes(ranking_file, FLAGS.feature_retain_count)
 
-# python extract_itrs.py ../../IAD-Generator/iad-generation/bm_sep_01/ 256 --feature_rank_file ../../IAD-Generator/iad-generation/feature_ranks.npz --feature_retain_count 64 --dst_directory bm_sep_itr --prefix train
+	# Generate the ITRS, go by layer for efficiency
+	for layer in range(5):
+		extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes)
