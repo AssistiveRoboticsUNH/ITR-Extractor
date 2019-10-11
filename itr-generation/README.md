@@ -17,3 +17,11 @@ make
 sudo make install
 ```
 replace in your code boost/python/numpy.hpp with boost/numpy.hpp also replace namespace np = boost::python::numpy with namespace np = boost::numpy; 
+
+
+Fedora commands:
+```
+sudo dnf install boost boost-static cmake
+sudo ln -s /usr/lib64/libboost_python.so /usr/lib64/libboost_python-py27.so
+
+```
