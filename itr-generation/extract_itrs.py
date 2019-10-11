@@ -243,7 +243,7 @@ def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
 
 			file_location = os.path.join(ex['label_name'], ex['example_id'])
 			itr_file = os.path.join(ITR_DATA_PATH, file_location+"_"+str(layer)+".npz")
-			np.savez(filename, data=itr, label=ex['label'])
+			np.savez(itr_file, data=itr, label=ex['label'])
 
 	tf.reset_default_graph()
 
