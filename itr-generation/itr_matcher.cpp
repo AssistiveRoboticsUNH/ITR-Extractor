@@ -35,6 +35,7 @@ int core_filters[13][2] =
 
 namespace p = boost::python;
 namespace np = boost::numpy;
+//namespace np = boost::python::numpy; // switch this and the prior line if itr_matcher.so fails to compile
 
 struct thread_data{
 	np::ndarray* projection;
