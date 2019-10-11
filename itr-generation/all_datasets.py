@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
 	procs = []
 	for dataset_id in range(4, 0, -1):
-    	p = Process(target=f, args=(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory, ))
-    	p.start()
+		p = Process(target=f, args=(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory, ))
+		p.start()
     
     for p in procs:
    		p.join()
