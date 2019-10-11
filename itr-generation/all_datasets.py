@@ -1,9 +1,8 @@
 from multiprocessing import Process
+from extract_itrs import extract_itrs_all_layers
 
 def f(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
-	cmd = "python extract_itrs.py "+model_type+" "+dataset_dir+" "+csv_file+" "+pad_length+" --dataset_id "+dataset_id+" --feature_retain_count "+feature_retain_count+" --gpu "+gpu+" --gpu_memory "+gpu_memory
-	print(cmd)
-    #os.system()
+	extract_itrs_all_layers(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory)
 
 if __name__ == '__main__':
 
