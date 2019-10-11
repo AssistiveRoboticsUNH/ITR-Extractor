@@ -260,7 +260,7 @@ if __name__ == '__main__':
 		file_location = os.path.join(ex['label_name'], ex['example_id'])
 		for layer in range(5):
 			iad_file = os.path.join(IAD_DATA_PATH, file_location+"_"+str(layer)+".npz")
-			assert os.path.exists(filename), "Cannot locate IAD file: "+ iad_file
+			assert os.path.exists(iad_file), "Cannot locate IAD file: "+ iad_file
 			ex['iad_path_'+str(layer)] = iad_file
 
 	# get the (depth, index) locations of which features to retain
