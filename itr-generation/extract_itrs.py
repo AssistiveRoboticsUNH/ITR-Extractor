@@ -211,7 +211,7 @@ def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
 		for i, ex in enumerate(csv_contents):
 			print("COnverting IAD to ITR {:6d}/{:6d}".format(i, len(csv_contents)))
 
-			f = np.load(csv_contents['iad_path_'+str(layer)])
+			f = np.load(csv_contents[i]['iad_path_'+str(layer)])
 			d, z = f["data"], f["length"]
 
 			# prune irrelevant features
