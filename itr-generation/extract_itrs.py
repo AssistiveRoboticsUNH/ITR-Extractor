@@ -195,7 +195,7 @@ def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
 
 	# get the pairwise projection (one dimensional representations of the data)
 	#print (data.shape)
-	ph = tf.placeholder(tf.float32, shape=(input_shape[layer][0],FLAGS.pad_length),name="input_ph")
+	ph = tf.placeholder(tf.float32, shape=input_shape[layer],name="input_ph")
 	itr_extractor = generate_pairwise_projections(ph)
 
 	# prevent TF from consuming entire GPU
@@ -233,7 +233,7 @@ def extract_itrs_by_layer(csv_contents, layer, pruning_keep_indexes=None):
 				iad = iad[:,:mod_pad_length]
 
 			# get the pairwise projection and then extract the ITRs
-			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: data[i]})
+			pairwise_projections = sess.run(itr_extractor, feed_dict = {ph: iad})
 			itr = np.array(extract_itrs(pairwise_projections[:, :z+1]))
 
 			# save ITR
