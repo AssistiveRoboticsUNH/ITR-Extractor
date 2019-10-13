@@ -236,14 +236,14 @@ def extract_itrs_by_layer(dataset_dir, dataset_id, gpu_memory, csv_contents, lay
 
 	tf.reset_default_graph()
 
-def extract_itrs_all_layers(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
+def extract_itrs_all_layers(model_type, dataset_dir, csv_filename, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
 	os.environ["CUDA_VISIBLE_DEVICES"] = gpu
 
 	#provide filenames and generate and save the ITRs into a nump array
 	try:
-		csv_contents = [ex for ex in read_csv(csv_file) if ex['dataset_id'] <= dataset_id]
+		csv_contents = [ex for ex in read_csv(csv_filename) if ex['dataset_id'] <= dataset_id]
 	except:
-		print("Cannot open CSV file: "+ csv_file)
+		print("Cannot open CSV file: "+ csv_filename)
 
 	# get the maximum frame length among the dataset and add the 
 	# full path name to the dict
