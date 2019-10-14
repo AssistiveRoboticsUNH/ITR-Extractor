@@ -84,7 +84,7 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 		sess.run(tf.local_variables_initializer())
 		sess.run(tf.global_variables_initializer())
 
-		num_iter = train_label.shape[0] * epochs
+		num_iter = len(train_data) * epochs
 
 		# Train
 		for i in range(num_iter):
