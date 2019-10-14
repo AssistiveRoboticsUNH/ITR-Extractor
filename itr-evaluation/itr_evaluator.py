@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import tensorflow as tf
 
@@ -8,27 +7,13 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-parser = argparse.ArgumentParser(description="Ensemble model processor")
-parser.add_argument('model', help='model to save (when training) or to load (when testing)')
-parser.add_argument('num_classes', type=int, help='the number of classes in the dataset')
-parser.add_argument('prefix', help='"train" or "test"')
-parser.add_argument('itr_prefix', help='prefix used when generating the ITRs')
 
-#parser.add_argument('--train', default='', help='.list file containing the train files')
-#parser.add_argument('--test', default='', help='.list file containing the test files')
-parser.add_argument('--batch_size', type=int, default=10, help='.list file containing the test files')
-parser.add_argument('--epochs', type=int, default=10, help='.list file containing the test files')
-
-parser.add_argument('--gpu', default="0", help='gpu to run on')
-parser.add_argument('--v', default=False, help='verbose')
-
-args = parser.parse_args()
-
+"""
 def file_io(file):
 	f = np.load(file)
 	data, label = f["data"], f["label"]
 	return data, label 
-
+"""
 
 
 
@@ -70,12 +55,26 @@ def model(num_classes, input_shape):
 
 	return placeholders, ops
 
-def train(model_name, num_classes, input_shape, train_data, train_label, test_data, test_label):
+def get_data(ex, layer):
+	f = np.load(ex['itr_path_'+str(layer)])
+	return np.expand_dims(f['data'], axis=0), ex['label']
+
+def get_batch_data(dataset, batch_size, layer):
+
+	idx = np.random.randint(0, len(dataset), size=batch_size)
+
+	data, label = [],[]
+	for i in idx:
+		data, label = get_data(dataset[i], layer)
+
+	return np.array(data), np.array(label)
+
+def train(model_name, num_classes, input_shape, train_data, test_data):
 	placeholders, ops = model(num_classes, input_shape)
 	saver = tf.train.Saver()
 
-	val_accs, tst_accs = [], []
-	val_losses, tst_losses = [], []
+	#val_accs, tst_accs = [], []
+	#val_losses, tst_losses = [], []
 
 	with tf.Session() as sess:
 		sess.run(tf.local_variables_initializer())
@@ -86,8 +85,9 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 		for i in range(num_iter):
 
 			# train op
-			idx = np.random.randint(0, len(train_label), size=args.batch_size)
-			sess.run(ops["train"], feed_dict={placeholders["input"]: train_data[idx], placeholders["output"]: train_label[idx]})
+			#idx = np.random.randint(0, len(train_label), size=args.batch_size)
+			data, label = get_batch_data(train_data, batch_size, layer)
+			sess.run(ops["train"], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 
 			if(i % 100 == 0):
 				print("Iteration: {:6d}/{:6d}".format(i, num_iter))
@@ -96,7 +96,7 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 				sess.run(tf.variables_initializer(stream_vars_valid))
 
 				#validation accuracy
-				val_acc, val_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: train_data[idx], placeholders["output"]: train_label[idx]})
+				val_acc, val_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 				print("Validation - "),
 				print("accuracy: {:.6f}".format(val_acc)),
 				print(", loss: {0}".format(val_loss))
@@ -105,8 +105,8 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 				tst_accs.append(val_loss)
 
 				#test accuracy
-				idx = np.random.randint(0, len(test_label), size=args.batch_size)
-				tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: test_data[idx], placeholders["output"]: test_label[idx]})
+				data, label = get_batch_data(test_data, batch_size, layer)
+				tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 				print("Test - "),
 				print("accuracy: {:.6f}".format(tst_acc)),
 				print(", loss: {0}".format(tst_loss))
@@ -114,7 +114,7 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 				val_losses.append(tst_acc)
 				tst_losses.append(tst_loss)
 
-
+	'''
 
 		# plot learning
 		plt.subplot(211)
@@ -137,12 +137,12 @@ def train(model_name, num_classes, input_shape, train_data, train_label, test_da
 		print("Finished training")
 		saver.save(sess, model_name+"/model")
 		print("Model saved")
-
+		
 	tf.reset_default_graph()
+	'''
 
 
-
-def test(model_name, num_classes, input_shape, test_data, test_label):
+def test(model_name, num_classes, input_shape, test_data):
 	placeholders, ops = model(num_classes, input_shape)
 	saver = tf.train.Saver()
 
@@ -156,31 +156,80 @@ def test(model_name, num_classes, input_shape, test_data, test_label):
 
 		sess.run(tf.local_variables_initializer())
 
-		for idx in range(len(test_label)):
-			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: test_data[None, idx], placeholders["output"]: test_label[None, idx]})
+		for ex in test_label:
+			data, label = get_data(ex)
+			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 	tf.reset_default_graph()
 	print("Test - "),
 	print("accuracy: {:.6f}".format(tst_acc)),
 	print(", loss: {0}".format(tst_loss))
 
+def main(dataset_dir, csv_filename, dataset_id, gpu):
 
-if __name__ == '__main__':
+	os.environ["CUDA_VISIBLE_DEVICES"] = gpu
+
+	#provide filenames and generate and save the ITRs into a nump array
+	try:
+		csv_contents = [ex for ex in read_csv(csv_filename) if ex['dataset_id'] <= dataset_id]
+	except:
+		print("Cannot open CSV file: "+ csv_filename)
+
+	train_data = [ex for ex in csv_contents if ex['dataset_id'] >  0]
+	test_data  = [ex for ex in csv_contents if ex['dataset_id'] == 0] 
+
+	train_data = train_data[:5]
+	test_data = test_data[:5]
+
+	# get the maximum frame length among the dataset and add the 
+	# full path name to the dict
+
+	dataset_id_path = os.path.join('itr', "dataset_"+str(25*dataset_id))
+	itr_data_path = os.path.join(dataset_dir, dataset_id_path)
+
+	for ex in csv_contents:
+		file_location = os.path.join(ex['label_name'], ex['example_id'])
+		for layer in range(5):
+
+			itr_file = os.path.join(itr_data_path, file_location+"_"+str(layer)+".npz")
+			assert os.path.exists(itr_file), "Cannot locate IAD file: "+ itr_file
+			ex['itr_path_'+str(layer)] = itr_file
+
+
 
 	for layer in range(5):
 
+		'''
 		model_dir = os.path.join(args.model, str(layer+1).zfill(2))
 		if(not os.path.exists(model_dir)):
 			os.makedirs(model_dir)
+		'''
 
-		train_filename = args.itr_prefix + "_train_" + str(layer) + ".npz"
-		test_filename = args.itr_prefix + "_test_" + str(layer) + ".npz"
-
-		test_data, test_label = file_io(test_filename)
 		train_input_shape = [args.batch_size, test_data.shape[1], test_data.shape[2]]
+		train(model_dir, args.num_classes, train_input_shape, train_data, test_data)
+		
 		test_input_shape =  [              1, test_data.shape[1], test_data.shape[2]]
+		test(model_dir, args.num_classes, test_input_shape, test_data)
 
-		if(args.prefix == "train"):
-			train_data, train_label = file_io(train_filename)
-			train(model_dir, args.num_classes, train_input_shape, train_data, train_label, test_data, test_label)
-		else:
-			test(model_dir, args.num_classes, test_input_shape, test_data, test_label)
+
+
+if __name__ == '__main__':
+
+	import argparse
+	parser = argparse.ArgumentParser(description="Ensemble model processor")
+	parser.add_argument('model', help='model to save (when training) or to load (when testing)')
+	parser.add_argument('num_classes', type=int, help='the number of classes in the dataset')
+	parser.add_argument('prefix', help='"train" or "test"')
+	parser.add_argument('itr_prefix', help='prefix used when generating the ITRs')
+
+	#parser.add_argument('--train', default='', help='.list file containing the train files')
+	#parser.add_argument('--test', default='', help='.list file containing the test files')
+	parser.add_argument('--batch_size', type=int, default=10, help='.list file containing the test files')
+	parser.add_argument('--epochs', type=int, default=10, help='.list file containing the test files')
+
+	parser.add_argument('--gpu', default="0", help='gpu to run on')
+	parser.add_argument('--v', default=False, help='verbose')
+
+	FLAGS = parser.parse_args()
+
+
+	
