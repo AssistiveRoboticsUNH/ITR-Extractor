@@ -73,7 +73,7 @@ def get_batch_data(dataset, batch_size, layer):
 
 	return np.array(data), np.array(label)
 
-def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size):
+def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer):
 	placeholders, ops = model(num_classes, input_shape,alpha, batch_size)
 	saver = tf.train.Saver()
 
@@ -174,7 +174,7 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 		input_shape = list(f['data'].shape)
 
 		
-		train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size)
+		train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer)
 			
 
 		tf.reset_default_graph()
