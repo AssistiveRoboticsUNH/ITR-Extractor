@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	parser.add_argument('csv_filename', help='a csv file denoting the files in the dataset')
 
 	parser.add_argument('num_classes', type=int, help='the number of classes in the dataset')
-	parser.add_argument('dataset_id', nargs='?', type=int, help='the dataset_id used to train the network. Is used in determing feature rank file')
+	#parser.add_argument('dataset_id', nargs='?', type=int, help='the dataset_id used to train the network. Is used in determing feature rank file')
 
 	#parser.add_argument('--train', default='', help='.list file containing the train files')
 	#parser.add_argument('--test', default='', help='.list file containing the test files')
