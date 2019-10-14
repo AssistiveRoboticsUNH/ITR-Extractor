@@ -93,9 +93,6 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 			#idx = np.random.randint(0, len(train_label), size=args.batch_size)
 			data, label = get_batch_data(train_data, batch_size, layer)
 
-			print("data:", data.shape)
-			print("label:", label.shape)
-
 			sess.run(ops["train"], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 
 			if(i % 100 == 0):
