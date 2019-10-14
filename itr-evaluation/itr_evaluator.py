@@ -21,7 +21,7 @@ def file_io(file):
 
 
 
-def model(num_classes, input_shape, alpha, batch_size):
+def model(num_classes, input_shape, alpha):
 
 	placeholders = {
 		"input": tf.placeholder(tf.float32, shape=[None]+input_shape, name="input_ph"),
@@ -74,7 +74,7 @@ def get_batch_data(dataset, batch_size, layer):
 	return np.array(data), np.array(label)
 
 def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer):
-	placeholders, ops = model(num_classes, input_shape,alpha, batch_size)
+	placeholders, ops = model(num_classes, input_shape,alpha)
 	saver = tf.train.Saver()
 
 	#val_accs, tst_accs = [], []
