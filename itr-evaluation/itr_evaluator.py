@@ -79,6 +79,7 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 
 	val_accs, tst_accs = [], []
 	val_losses, tst_losses = [], []
+	
 	with tf.Session() as sess:
 
 		sess.run(tf.local_variables_initializer())
@@ -92,7 +93,6 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 			# train op
 			#idx = np.random.randint(0, len(train_label), size=args.batch_size)
 			data, label = get_batch_data(train_data, batch_size, layer)
-
 			sess.run(ops["train"], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 
 			if(i % 100 == 0):
