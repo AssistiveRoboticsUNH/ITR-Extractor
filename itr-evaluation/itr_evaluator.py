@@ -163,8 +163,8 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 	train_data = [ex for ex in csv_contents if ex['dataset_id'] >  0]
 	test_data  = [ex for ex in csv_contents if ex['dataset_id'] == 0] 
 
-	#train_data = train_data[:5]
-	#test_data = test_data[:5]
+	train_data = train_data[:5]
+	test_data = test_data[:5]
 
 	# get the maximum frame length among the dataset and add the 
 	# full path name to the dict
