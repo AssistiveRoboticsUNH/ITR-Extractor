@@ -77,8 +77,8 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 	placeholders, ops = model(num_classes, input_shape,alpha)
 	saver = tf.train.Saver()
 
-	#val_accs, tst_accs = [], []
-	#val_losses, tst_losses = [], []
+	val_accs, tst_accs = [], []
+	val_losses, tst_losses = [], []
 	with tf.Session() as sess:
 
 		sess.run(tf.local_variables_initializer())
