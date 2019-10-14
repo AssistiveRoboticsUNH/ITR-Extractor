@@ -164,7 +164,7 @@ def test(model_name, num_classes, input_shape, test_data):
 	print("accuracy: {:.6f}".format(tst_acc)),
 	print(", loss: {0}".format(tst_loss))
 
-def main(dataset_dir, csv_filename, dataset_id, gpu):
+def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs, alpha, gpu):
 
 	os.environ["CUDA_VISIBLE_DEVICES"] = gpu
 
@@ -216,10 +216,11 @@ if __name__ == '__main__':
 
 	import argparse
 	parser = argparse.ArgumentParser(description="Ensemble model processor")
-	parser.add_argument('model', help='model to save (when training) or to load (when testing)')
+	parser.add_argument('dataset_dir', help='the directory where the dataset is located')
+	parser.add_argument('csv_filename', help='a csv file denoting the files in the dataset')
+
 	parser.add_argument('num_classes', type=int, help='the number of classes in the dataset')
-	parser.add_argument('prefix', help='"train" or "test"')
-	parser.add_argument('itr_prefix', help='prefix used when generating the ITRs')
+	parser.add_argument('dataset_id', nargs='?', type=int, help='the dataset_id used to train the network. Is used in determing feature rank file')
 
 	#parser.add_argument('--train', default='', help='.list file containing the train files')
 	#parser.add_argument('--test', default='', help='.list file containing the test files')
@@ -231,5 +232,13 @@ if __name__ == '__main__':
 
 	FLAGS = parser.parse_args()
 
+	main(FLAGS.dataset_dir, 
+		FLAGS.csv_filename, 
+		FLAGS.num_classes, 
+		FLAGS.dataset_id, 
+		FLAGS.batch_size, 
+		FLAGS.epochs, 
+		FLAGS.alpha, 
+		FLAGS.gpu)
 
 	
