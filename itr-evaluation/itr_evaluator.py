@@ -21,11 +21,11 @@ def file_io(file):
 
 
 
-def model(num_classes, input_shape, alpha):
+def model(num_classes, input_shape, alpha, batch_size):
 
 	placeholders = {
-		"input": tf.placeholder(tf.float32, shape=input_shape, name="input_ph"),
-		"output": tf.placeholder(tf.int32, shape=[input_shape[0]], name="output_ph")
+		"input": tf.placeholder(tf.float32, shape=[batch_size]+input_shape, name="input_ph"),
+		"output": tf.placeholder(tf.int32, shape=[batch_size], name="output_ph")
 		}
 
 	top = placeholders["input"]
@@ -73,19 +73,20 @@ def get_batch_data(dataset, batch_size, layer):
 
 	return np.array(data), np.array(label)
 
-def train(model_name, num_classes, input_shape, train_data, test_data, epochs, alpha):
-	placeholders, ops = model(num_classes, input_shape,alpha)
+def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size):
+	placeholders, ops = model(num_classes, input_shape,alpha, batch_size)
 	saver = tf.train.Saver()
 
 	#val_accs, tst_accs = [], []
 	#val_losses, tst_losses = [], []
-
 	with tf.Session() as sess:
+
 		sess.run(tf.local_variables_initializer())
 		sess.run(tf.global_variables_initializer())
 
 		num_iter = train_label.shape[0] * epochs
 
+		# Train
 		for i in range(num_iter):
 
 			# train op
@@ -118,56 +119,18 @@ def train(model_name, num_classes, input_shape, train_data, test_data, epochs, a
 				val_losses.append(tst_acc)
 				tst_losses.append(tst_loss)
 
-	'''
-
-		# plot learning
-		plt.subplot(211)
-		plt.plot(np.array(val_accs))
-		plt.plot(np.array(tst_accs))
-
-		plt.suptitle('Accuracies')
-		plt.subplot(212)
-		plt.plot(np.array(val_losses))
-		plt.plot(np.array(tst_losses))
-
-		plt.suptitle('Losses')
-
-		plt.legend()
-		#plt.show()
-		plt.savefig("accs_losses.png")
 
 
-		# save model
-		print("Finished training")
-		saver.save(sess, model_name+"/model")
-		print("Model saved")
-		
-	tf.reset_default_graph()
-	'''
-
-
-def test(model_name, num_classes, input_shape, test_data):
-	placeholders, ops = model(num_classes, input_shape, 1e-3)
-	saver = tf.train.Saver()
-
-	with tf.Session() as sess:
-		# load saved model
-		ckpt = tf.train.get_checkpoint_state(model_name)
-		if ckpt and ckpt.model_checkpoint_path:
-			print("loading checkpoint %s,waiting......" % ckpt.model_checkpoint_path)
-			saver.restore(sess, ckpt.model_checkpoint_path)
-			print("load complete!")
-
-		sess.run(tf.local_variables_initializer())
-
-		for ex in test_label:
+		# Test
+		for ex in test_data:
 			data, label = get_data(ex)
 			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
-	tf.reset_default_graph()
-	print("Test - "),
-	print("accuracy: {:.6f}".format(tst_acc)),
-	print(", loss: {0}".format(tst_loss))
+		
+		print("Test - "),
+		print("accuracy: {:.6f}".format(tst_acc)),
+		print(", loss: {0}".format(tst_loss))
 
+	
 def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs, alpha, gpu):
 
 	os.environ["CUDA_VISIBLE_DEVICES"] = gpu
@@ -208,13 +171,13 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 			os.makedirs(model_dir)
 		'''
 		f = np.load(csv_contents[0]['itr_path_'+str(layer)])
-		input_shape = f['data'].shape
+		input_shape = list(f['data'].shape)
 
-		train_input_shape = [batch_size, input_shape[0], input_shape[1]]
-		train(model_dir, num_classes, train_input_shape, train_data, test_data, epochs, alpha)
 		
-		test_input_shape =  [         1, input_shape[0], input_shape[1]]
-		test(model_dir, num_classes, test_input_shape, test_data)
+		train_test(sess, num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size)
+			
+
+		tf.reset_default_graph()
 
 
 
