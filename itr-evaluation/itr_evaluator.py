@@ -163,8 +163,8 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 	train_data = [ex for ex in csv_contents if ex['dataset_id'] >  0]
 	test_data  = [ex for ex in csv_contents if ex['dataset_id'] == 0] 
 
-	train_data = train_data[:5]
-	test_data = test_data[:5]
+	#train_data = train_data[:5]
+	#test_data = test_data[:5]
 
 	# get the maximum frame length among the dataset and add the 
 	# full path name to the dict
@@ -180,7 +180,7 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 			assert os.path.exists(itr_file), "Cannot locate IAD file: "+ itr_file
 			ex['itr_path_'+str(layer)] = itr_file
 
-	model_dir = os.path.join(dataset_dir, 'itr_model')
+	model_dir = os.path.join(dataset_dir, 'itr_model_'+str(dataset_id*25))
 	if(not os.path.exists(model_dir)):
 		os.makedirs(model_dir)
 
