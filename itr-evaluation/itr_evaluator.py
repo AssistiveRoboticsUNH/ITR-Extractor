@@ -133,7 +133,7 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 		# Test
 		for ex in test_data:
 			data, label = get_data(ex, layer)
-			data, label = np.expand_dims(data, axis=0), np.array(label)
+			data, label = np.expand_dims(data, axis=0), np.array([label])
 
 			print("val_data:", data.shape)
 			print("val_label:", label.shape)
