@@ -94,8 +94,8 @@ def train_test(model_dir, num_classes, input_shape, train_data, test_data, epoch
 			#idx = np.random.randint(0, len(train_label), size=args.batch_size)
 			data, label = get_batch_data(train_data, batch_size, layer)
 
-			print("data:", data.shape)
-			print("label:", label.shape)
+			#print("data:", data.shape)
+			#print("label:", label.shape)
 
 			sess.run(ops["train"], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 
@@ -117,8 +117,8 @@ def train_test(model_dir, num_classes, input_shape, train_data, test_data, epoch
 				#test accuracy
 				data, label = get_batch_data(test_data, batch_size, layer)
 
-				print("val_data:", data.shape)
-				print("val_label:", label.shape)
+				#print("val_data:", data.shape)
+				#print("val_label:", label.shape)
 
 				tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 				print("Test - "),
@@ -135,8 +135,8 @@ def train_test(model_dir, num_classes, input_shape, train_data, test_data, epoch
 			data, label = get_data(ex, layer)
 			data, label = np.expand_dims(data, axis=0), np.array([label])
 
-			print("val_data:", data.shape)
-			print("val_label:", label.shape)
+			#print("val_data:", data.shape)
+			#print("val_label:", label.shape)
 
 			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 		
@@ -144,7 +144,9 @@ def train_test(model_dir, num_classes, input_shape, train_data, test_data, epoch
 		print("accuracy: {:.6f}".format(tst_acc)),
 		print(", loss: {0}".format(tst_loss))
 
-		ofile = open(os.path.join(model_dir, "itr_model.txt"), 'w')
+		return tst_acc
+
+		
 		##HERE
 
 	
@@ -178,7 +180,12 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 			assert os.path.exists(itr_file), "Cannot locate IAD file: "+ itr_file
 			ex['itr_path_'+str(layer)] = itr_file
 
+	model_dir = os.path.join(dataset_dir, 'itr_model')
+	if(not os.path.exists(model_dir)):
+		os.makedirs(model_dir)
 
+	ofile = open(os.path.join(model_dir, "itr_model.txt"), 'w')
+		
 
 	for layer in range(5):
 
@@ -190,14 +197,12 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 		f = np.load(csv_contents[0]['itr_path_'+str(layer)])
 		input_shape = list(f['data'].shape)
 
-		model_dir = os.path.join(dataset_dir, 'itr_model_'+str(layer))
-		if(not os.path.exists(model_dir)):
-			os.makedirs(model_dir)
-
-		train_test(model_dir, num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer)
-			
+		
+		acc = train_test(model_dir, num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer)
+		ofile.write("{0}\t{1}".format(layer, acc))
 
 		tf.reset_default_graph()
+	ofile.close
 
 
 
