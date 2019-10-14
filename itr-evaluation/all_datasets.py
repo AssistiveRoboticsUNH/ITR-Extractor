@@ -37,7 +37,7 @@ if __name__ == '__main__':
 		p = Process(target=f, args=(FLAGS.dataset_dir, 
 		FLAGS.csv_filename, 
 		FLAGS.num_classes, 
-		FLAGS.dataset_id, 
+		dataset_id, 
 		FLAGS.batch_size, 
 		FLAGS.epochs, 
 		FLAGS.alpha, 
