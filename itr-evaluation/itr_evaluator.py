@@ -35,8 +35,6 @@ def model(num_classes, input_shape, alpha):
 
 	#---------------
 
-	print("---> out ", out.get_shape(), placeholders["output"].get_shape())
-
 	loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=placeholders["output"],logits=out)
 	train_op = tf.train.AdamOptimizer(alpha).minimize(loss)
 
@@ -92,6 +90,10 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 			# train op
 			#idx = np.random.randint(0, len(train_label), size=args.batch_size)
 			data, label = get_batch_data(train_data, batch_size, layer)
+
+			print("data:", data.shape)
+			print("label:", label.shape)
+
 			sess.run(ops["train"], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 
 			if(i % 100 == 0):
