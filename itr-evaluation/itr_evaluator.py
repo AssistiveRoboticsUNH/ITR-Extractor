@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 import sys
-sys.path.append("../iad-generation/")
+sys.path.append("../../IAD-Generator/iad-generation/")
 from csv_utils import read_csv
 
 """
