@@ -59,7 +59,7 @@ def model(num_classes, input_shape, alpha):
 
 def get_data(ex, layer):
 	f = np.load(ex['itr_path_'+str(layer)])
-	return np.expand_dims(f['data'], axis=0), np.array(ex['label'])
+	return f['data'], ex['label']
 
 def get_batch_data(dataset, batch_size, layer):
 
@@ -128,7 +128,7 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 		# Test
 		for ex in test_data:
 			data, label = get_data(ex)
-			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
+			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: np.expand_dims(data, axis=0), placeholders["output"]: np.array(label)})
 		
 		print("Test - "),
 		print("accuracy: {:.6f}".format(tst_acc)),
