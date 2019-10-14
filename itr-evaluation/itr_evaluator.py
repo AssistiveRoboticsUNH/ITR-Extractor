@@ -8,6 +8,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
+import sys
+sys.path.append("../iad-generation/")
+from csv_utils import read_csv
+
 """
 def file_io(file):
 	f = np.load(file)
