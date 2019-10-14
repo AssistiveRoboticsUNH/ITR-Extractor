@@ -59,7 +59,7 @@ def model(num_classes, input_shape, alpha):
 
 def get_data(ex, layer):
 	f = np.load(ex['itr_path_'+str(layer)])
-	return np.expand_dims(f['data'], axis=0), ex['label']
+	return np.expand_dims(f['data'], axis=0), np.array(ex['label'])
 
 def get_batch_data(dataset, batch_size, layer):
 
@@ -67,7 +67,9 @@ def get_batch_data(dataset, batch_size, layer):
 
 	data, label = [],[]
 	for i in idx:
-		data, label = get_data(dataset[i], layer)
+		d, l = get_data(dataset[i], layer)
+		data.append(d)
+		label.append(l)
 
 	return np.array(data), np.array(label)
 
