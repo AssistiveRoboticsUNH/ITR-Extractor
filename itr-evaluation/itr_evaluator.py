@@ -174,7 +174,7 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 		input_shape = list(f['data'].shape)
 
 		
-		train_test(sess, num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size)
+		train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size)
 			
 
 		tf.reset_default_graph()
