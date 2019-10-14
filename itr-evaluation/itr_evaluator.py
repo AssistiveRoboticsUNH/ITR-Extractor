@@ -25,7 +25,7 @@ def model(num_classes, input_shape, alpha):
 
 	placeholders = {
 		"input": tf.placeholder(tf.float32, shape=[None]+input_shape, name="input_ph"),
-		"output": tf.placeholder(tf.int32, shape=[None, 1], name="output_ph")
+		"output": tf.placeholder(tf.int32, shape=[None], name="output_ph")
 		}
 
 	top = placeholders["input"]
@@ -71,7 +71,7 @@ def get_batch_data(dataset, batch_size, layer):
 		data.append(d)
 		label.append(l)
 
-	return np.array(data), np.array(label).reshape(-1, 1)
+	return np.array(data), np.array(label)
 
 def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer):
 	placeholders, ops = model(num_classes, input_shape,alpha)
