@@ -210,10 +210,10 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 		f = np.load(csv_contents[0]['itr_path_'+str(layer)])
 		input_shape = f['data'].shape
 
-		train_input_shape = [batch_size, input_shape.shape[0], input_shape.shape[1]]
+		train_input_shape = [batch_size, input_shape[0], input_shape[1]]
 		train(model_dir, num_classes, train_input_shape, train_data, test_data, epochs, alpha)
 		
-		test_input_shape =  [         1, input_shape.shape[0], input_shape.shape[1]]
+		test_input_shape =  [         1, input_shape[0], input_shape[1]]
 		test(model_dir, num_classes, test_input_shape, test_data)
 
 
