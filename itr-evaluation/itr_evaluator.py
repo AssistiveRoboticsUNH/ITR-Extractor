@@ -24,8 +24,8 @@ def file_io(file):
 def model(num_classes, input_shape, alpha, batch_size):
 
 	placeholders = {
-		"input": tf.placeholder(tf.float32, shape=[batch_size]+input_shape, name="input_ph"),
-		"output": tf.placeholder(tf.int32, shape=[batch_size], name="output_ph")
+		"input": tf.placeholder(tf.float32, shape=[None]+input_shape, name="input_ph"),
+		"output": tf.placeholder(tf.int32, shape=[None], name="output_ph")
 		}
 
 	top = placeholders["input"]
