@@ -25,7 +25,7 @@ def model(num_classes, input_shape, alpha):
 
 	placeholders = {
 		"input": tf.placeholder(tf.float32, shape=[None]+input_shape, name="input_ph"),
-		"output": tf.placeholder(tf.int32, shape=None, name="output_ph")
+		"output": tf.placeholder(tf.int32, shape=(None), name="output_ph")
 		}
 
 	top = placeholders["input"]
