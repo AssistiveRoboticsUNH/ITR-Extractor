@@ -73,7 +73,7 @@ def get_batch_data(dataset, batch_size, layer):
 
 	return np.array(data), np.array(label)
 
-def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer):
+def train_test(model_dir, num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer):
 	placeholders, ops = model(num_classes, input_shape,alpha)
 	saver = tf.train.Saver()
 
@@ -144,6 +144,9 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 		print("accuracy: {:.6f}".format(tst_acc)),
 		print(", loss: {0}".format(tst_loss))
 
+		ofile = open(os.path.join(model_dir, "itr_model.txt"), 'w')
+		##HERE
+
 	
 def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs, alpha, gpu):
 
@@ -187,8 +190,11 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 		f = np.load(csv_contents[0]['itr_path_'+str(layer)])
 		input_shape = list(f['data'].shape)
 
-		
-		train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer)
+		model_dir = os.path.join(dataset_dir, 'itr_model_'+str(layer))
+		if(not os.path.exists(model_dir)):
+			os.makedirs(model_dir)
+
+		train_test(model_dir, num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer)
 			
 
 		tf.reset_default_graph()
