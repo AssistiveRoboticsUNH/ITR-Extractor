@@ -124,7 +124,7 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 
 		# Test
 		for ex in test_data:
-			data, label = get_data(ex)
+			data, label = get_data(ex, layer)
 			tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: np.expand_dims(data, axis=0), placeholders["output"]: np.array(label)})
 		
 		print("Test - "),
