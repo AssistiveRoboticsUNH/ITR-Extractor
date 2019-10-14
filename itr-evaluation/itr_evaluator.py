@@ -21,7 +21,7 @@ def file_io(file):
 
 
 
-def model(num_classes, input_shape):
+def model(num_classes, input_shape, alpha):
 
 	placeholders = {
 		"input": tf.placeholder(tf.float32, shape=input_shape, name="input_ph"),
@@ -38,7 +38,7 @@ def model(num_classes, input_shape):
 	print("---> out ", out.get_shape(), placeholders["output"].get_shape())
 
 	loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=placeholders["output"],logits=out)
-	train_op = tf.train.AdamOptimizer(1e-3).minimize(loss)
+	train_op = tf.train.AdamOptimizer(alpha).minimize(loss)
 
 	#---------------
 
@@ -73,8 +73,8 @@ def get_batch_data(dataset, batch_size, layer):
 
 	return np.array(data), np.array(label)
 
-def train(model_name, num_classes, input_shape, train_data, test_data):
-	placeholders, ops = model(num_classes, input_shape)
+def train(model_name, num_classes, input_shape, train_data, test_data, epochs, alpha):
+	placeholders, ops = model(num_classes, input_shape,alpha)
 	saver = tf.train.Saver()
 
 	#val_accs, tst_accs = [], []
@@ -84,7 +84,7 @@ def train(model_name, num_classes, input_shape, train_data, test_data):
 		sess.run(tf.local_variables_initializer())
 		sess.run(tf.global_variables_initializer())
 
-		num_iter = train_label.shape[0] * args.epochs
+		num_iter = train_label.shape[0] * epochs
 
 		for i in range(num_iter):
 
@@ -147,7 +147,7 @@ def train(model_name, num_classes, input_shape, train_data, test_data):
 
 
 def test(model_name, num_classes, input_shape, test_data):
-	placeholders, ops = model(num_classes, input_shape)
+	placeholders, ops = model(num_classes, input_shape, 1e-3)
 	saver = tf.train.Saver()
 
 	with tf.Session() as sess:
@@ -208,11 +208,11 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 			os.makedirs(model_dir)
 		'''
 
-		train_input_shape = [args.batch_size, test_data.shape[1], test_data.shape[2]]
-		train(model_dir, args.num_classes, train_input_shape, train_data, test_data)
+		train_input_shape = [batch_size, test_data.shape[1], test_data.shape[2]]
+		train(model_dir, num_classes, train_input_shape, train_data, test_data, epochs, alpha)
 		
 		test_input_shape =  [              1, test_data.shape[1], test_data.shape[2]]
-		test(model_dir, args.num_classes, test_input_shape, test_data)
+		test(model_dir, num_classes, test_input_shape, test_data)
 
 
 
