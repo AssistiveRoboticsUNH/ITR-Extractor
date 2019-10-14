@@ -117,8 +117,8 @@ def train_test(num_classes, input_shape, train_data, test_data, epochs, alpha, b
 				#test accuracy
 				data, label = get_batch_data(test_data, batch_size, layer)
 
-				print("data:", data.shape)
-				print("label:", label.shape)
+				print("val_data:", data.shape)
+				print("val_label:", label.shape)
 
 				tst_acc, tst_loss = sess.run([ops["cumulative_accuracy"], ops["loss"]], feed_dict={placeholders["input"]: data, placeholders["output"]: label})
 				print("Test - "),
