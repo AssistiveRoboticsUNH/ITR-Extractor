@@ -225,9 +225,9 @@ if __name__ == '__main__':
 	#parser.add_argument('--test', default='', help='.list file containing the test files')
 	parser.add_argument('--batch_size', type=int, default=10, help='.list file containing the test files')
 	parser.add_argument('--epochs', type=int, default=10, help='.list file containing the test files')
+	parser.add_argument('--alpha', nargs='?', type=int, default=1e-4, help='the maximum length video to convert into an IAD')
 
 	parser.add_argument('--gpu', default="0", help='gpu to run on')
-	parser.add_argument('--v', default=False, help='verbose')
 
 	FLAGS = parser.parse_args()
 
