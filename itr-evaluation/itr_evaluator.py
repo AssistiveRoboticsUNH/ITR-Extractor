@@ -201,7 +201,7 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 
 		
 		acc = train_test(model_dir, num_classes, input_shape, train_data, test_data, epochs, alpha, batch_size, layer)
-		ofile.write("{0}\t{1}".format(layer, acc))
+		ofile.write("{0}\t{1}\n".format(layer, acc))
 
 		tf.reset_default_graph()
 	ofile.close()
