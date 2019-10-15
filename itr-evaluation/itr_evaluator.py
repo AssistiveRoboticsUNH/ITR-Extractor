@@ -180,7 +180,7 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 			assert os.path.exists(itr_file), "Cannot locate IAD file: "+ itr_file
 			ex['itr_path_'+str(layer)] = itr_file
 
-	model_dir = os.path.join(dataset_dir, 'itr_model_'+str(dataset_id*25))
+	model_dir = os.path.join(dataset_dir, 'itr_model/itr_model_'+str(dataset_id*25))
 	if(not os.path.exists(model_dir)):
 		os.makedirs(model_dir)
 
