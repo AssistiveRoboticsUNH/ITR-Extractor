@@ -23,7 +23,7 @@ if __name__ == '__main__':
 	parser.add_argument('pad_length', nargs='?', type=int, default=-1, help='the maximum length video to convert into an IAD')
 
 	#feature pruning command line args
-	parser.add_argument('--dataset_id', nargs='?', type=int, default=4, help='the dataset_id used by the csv file')
+	#parser.add_argument('--dataset_id', nargs='?', type=int, default=4, help='the dataset_id used by the csv file')
 	parser.add_argument('--feature_retain_count', nargs='?', type=int, default=-1, help='the number of features to remove')
 
 	parser.add_argument('--gpu_memory', nargs='?', type=float, default=0.5, help='how much of the GPU should the process consume')
