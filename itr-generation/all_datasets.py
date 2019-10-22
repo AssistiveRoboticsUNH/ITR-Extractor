@@ -30,7 +30,7 @@ if __name__ == '__main__':
 	FLAGS = parser.parse_args()
 
 	procs = []
-	for dataset_id in range(4, 2, -1):
+	for dataset_id in range(4, 1, -1):
 		p = Process(target=f, args=(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_filename, FLAGS.pad_length, dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory, ))
 		p.start()
 	
