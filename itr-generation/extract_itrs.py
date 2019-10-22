@@ -236,7 +236,7 @@ def extract_itrs_by_layer(dataset_dir, dataset_id, gpu_memory, csv_contents, lay
 
 	tf.reset_default_graph()
 
-def extract_itrs_all_layers(model_type, dataset_dir, csv_filename, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
+def main(model_type, dataset_dir, csv_filename, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
 	os.environ["CUDA_VISIBLE_DEVICES"] = gpu
 
 	#provide filenames and generate and save the ITRs into a nump array
@@ -247,7 +247,7 @@ def extract_itrs_all_layers(model_type, dataset_dir, csv_filename, pad_length, d
 
 	# get the maximum frame length among the dataset and add the 
 	# full path name to the dict
-	iad_data_path = os.path.join(dataset_dir, 'iad')
+	iad_data_path = os.path.join(dataset_dir, 'iad_'+str(25*dataset_id))#os.path.join(dataset_dir, 'iad')
 
 	for ex in csv_contents:
 		file_location = os.path.join(ex['label_name'], ex['example_id'])
@@ -290,4 +290,4 @@ if __name__ == '__main__':
 
 	FLAGS = parser.parse_args()
 
-	extract_itrs_all_layers(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_filename, FLAGS.pad_length, FLAGS.dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory)
+	main(FLAGS.model_type, FLAGS.dataset_dir, FLAGS.csv_filename, FLAGS.pad_length, FLAGS.dataset_id, FLAGS.feature_retain_count, FLAGS.gpu, FLAGS.gpu_memory)

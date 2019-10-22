@@ -1,5 +1,5 @@
 from multiprocessing import Process
-from extract_itrs import extract_itrs_all_layers
+from extract_itrs import main
 
 
 
@@ -7,7 +7,7 @@ from extract_itrs import extract_itrs_all_layers
 
 
 def f(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory):
-	extract_itrs_all_layers(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory)
+	main(model_type, dataset_dir, csv_file, pad_length, dataset_id, feature_retain_count, gpu, gpu_memory)
 
 if __name__ == '__main__':
 
