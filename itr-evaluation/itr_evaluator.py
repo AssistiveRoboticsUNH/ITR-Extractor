@@ -185,7 +185,7 @@ def main(dataset_dir, csv_filename, num_classes, dataset_id, batch_size, epochs,
 		os.makedirs(model_dir)
 
 	out_file = os.path.join(model_dir, "itr_model.txt")
-	print(out_file)
+	print("out_file:", out_file)
 	ofile = open(out_file, 'w')
 		
 
